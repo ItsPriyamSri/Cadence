@@ -48,7 +48,7 @@ export function Modal({
     return (
         <AnimatePresence>
             {isOpen && (
-                <>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
                     {/* Backdrop */}
                     <motion.div
                         variants={backdrop}
@@ -56,7 +56,7 @@ export function Modal({
                         animate="visible"
                         exit="exit"
                         onClick={onClose}
-                        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                     />
 
                     {/* Modal content */}
@@ -66,25 +66,26 @@ export function Modal({
                         animate="visible"
                         exit="exit"
                         className={cn(
-                            'fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2',
-                            'w-[calc(100%-2rem)] max-w-md',
-                            'bg-bg-primary rounded-2xl shadow-medium',
+                            'relative z-10',
+                            'w-full max-w-md',
+                            'bg-bg-primary rounded-3xl shadow-2xl',
+                            'border border-white/5',
                             'max-h-[85vh] overflow-hidden flex flex-col',
                             className
                         )}
                     >
                         {/* Header */}
                         {(title || showClose) && (
-                            <div className="flex items-center justify-between p-4 border-b border-border">
+                            <div className="flex items-center justify-between p-5 border-b border-border/50">
                                 {title && (
-                                    <h2 className="text-lg font-semibold text-text-primary">
+                                    <h2 className="text-xl font-bold text-text-primary tracking-tight">
                                         {title}
                                     </h2>
                                 )}
                                 {showClose && (
                                     <button
                                         onClick={onClose}
-                                        className="p-1.5 rounded-lg hover:bg-bg-secondary transition-colors text-text-secondary"
+                                        className="p-2 rounded-xl hover:bg-bg-secondary transition-colors text-text-secondary hover:text-text-primary"
                                         aria-label="Close modal"
                                     >
                                         <X className="w-5 h-5" />
@@ -94,9 +95,11 @@ export function Modal({
                         )}
 
                         {/* Body */}
-                        <div className="flex-1 overflow-auto">{children}</div>
+                        <div className="flex-1 overflow-auto custom-scrollbar">
+                            {children}
+                        </div>
                     </motion.div>
-                </>
+                </div>
             )}
         </AnimatePresence>
     );

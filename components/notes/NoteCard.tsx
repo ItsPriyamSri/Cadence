@@ -88,7 +88,8 @@ export function NoteCard({ note, isActive, onClick }: NoteCardProps) {
                 onChange={handleContentChange}
                 placeholder="What's on your mind?"
                 className={cn(
-                    'w-full bg-transparent resize-none focus:outline-none',
+                    'w-full bg-transparent resize-none',
+                    'focus:outline-none focus:ring-0 focus:shadow-none',
                     'text-base text-text-primary placeholder:text-text-secondary/50',
                     'min-h-[60px] leading-relaxed'
                 )}

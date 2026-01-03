@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Circle, Play, Pause, CheckCircle, Clock, Target, Star,
-    MoreVertical, Trash2
+    MoreVertical, Trash2, RotateCcw
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { Task } from '@/lib/firebase/firestore';
@@ -12,8 +12,6 @@ import { updateTaskStatus, getNextStatus, updateTask, deleteTask } from '@/lib/a
 import { useAppStore } from '@/lib/store/app';
 import {
     pulseGreen,
-    pulseTransition,
-    listItem,
     celebrationPop,
 } from '@/lib/utils/animations';
 import { formatShortDate, formatTime } from '@/lib/utils/dates';
@@ -24,16 +22,16 @@ interface TaskCardProps {
 
 const statusConfig = {
     default: {
-        bg: 'bg-bg-secondary/50',
-        border: 'border-border hover:border-accent/30',
+        bg: 'bg-bg-secondary/40',
+        border: 'border-transparent hover:border-accent/20',
         icon: Circle,
         iconColor: 'text-text-secondary group-hover:text-accent',
-        iconBg: 'bg-transparent group-hover:bg-accent/10',
+        iconBg: 'bg-bg-primary group-hover:bg-accent/10',
         pulse: false,
     },
     started: {
         bg: 'bg-gradient-to-r from-[#ffbe0b]/10 to-[#fb5607]/5',
-        border: 'border-[#ffbe0b]/50',
+        border: 'border-[#ffbe0b]/30',
         icon: Play,
         iconColor: 'text-[#ffbe0b]',
         iconBg: 'bg-[#ffbe0b]/20',
@@ -41,15 +39,15 @@ const statusConfig = {
     },
     paused: {
         bg: 'bg-bg-secondary/60',
-        border: 'border-[#888]/40',
+        border: 'border-border',
         icon: Pause,
-        iconColor: 'text-[#888]',
-        iconBg: 'bg-[#888]/20',
+        iconColor: 'text-text-secondary',
+        iconBg: 'bg-bg-tertiary',
         pulse: false,
     },
     done: {
         bg: 'bg-[#06d6a0]/5',
-        border: 'border-[#06d6a0]/30',
+        border: 'border-[#06d6a0]/20',
         icon: CheckCircle,
         iconColor: 'text-[#06d6a0]',
         iconBg: 'bg-[#06d6a0]/10',
@@ -73,9 +71,13 @@ export function TaskCard({ task }: TaskCardProps) {
 
         const nextStatus = getNextStatus(task.status);
         if (nextStatus) {
-            setIsAnimating(true);
-            await updateTaskStatus(task.id, nextStatus);
-            setTimeout(() => setIsAnimating(false), 500);
+            if (nextStatus === 'done') {
+                openStatusModal(task.id);
+            } else {
+                setIsAnimating(true);
+                await updateTaskStatus(task.id, nextStatus);
+                setTimeout(() => setIsAnimating(false), 500);
+            }
         }
     };
 
@@ -94,6 +96,11 @@ export function TaskCard({ task }: TaskCardProps) {
         await deleteTask(task.id);
     };
 
+    const handleRestore = async () => {
+        closeContextMenu();
+        await updateTaskStatus(task.id, 'default');
+    };
+
     const handleTouchStart = () => {
         longPressTimer.current = setTimeout(() => {
             openContextMenu(task.id);
@@ -109,43 +116,39 @@ export function TaskCard({ task }: TaskCardProps) {
     return (
         <motion.div
             layout
-            layoutId={task.id}
-            variants={listItem}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             onClick={handleTaskClick}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onMouseEnter={() => setShowMenu(true)}
             onMouseLeave={() => { setShowMenu(false); if (isMenuOpen) closeContextMenu(); }}
             className={cn(
-                'group relative p-4 border-2 rounded-2xl transition-all cursor-pointer',
-                'hover:shadow-lg active:scale-[0.98]',
+                'group relative p-4 rounded-2xl transition-all cursor-pointer border',
+                'hover:shadow-lg hover:border-border/50 hover:bg-bg-secondary/80',
+                'active:scale-[0.99] active:shadow-sm',
                 config.bg,
                 config.border,
-                task.status === 'done' && 'opacity-60',
-                task.priority && 'ring-2 ring-[#ffbe0b]/30'
+                task.status === 'done' && 'opacity-60 hover:opacity-100',
+                task.priority && 'ring-1 ring-[#ffbe0b]/50 shadow-[0_0_15px_-3px_rgba(255,190,11,0.15)]'
             )}
         >
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-4">
                 {/* Status Icon Button */}
                 <motion.button
                     onClick={handleIconClick}
                     className="flex-shrink-0 mt-0.5 relative z-10"
-                    aria-label={`Task options for ${task.title}`}
-                    variants={isAnimating ? celebrationPop : undefined}
-                    initial="initial"
-                    animate={isAnimating ? 'animate' : 'initial'}
                     whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                    whileTap={{ scale: 0.95 }}
                 >
                     <motion.div
-                        animate={config.pulse ? pulseGreen.animate : undefined}
-                        transition={config.pulse ? pulseTransition : undefined}
+                        animate={config.pulse ? 'animate' : undefined}
+                        variants={pulseGreen}
                         className={cn(
-                            'w-9 h-9 flex items-center justify-center rounded-full',
-                            'transition-all duration-200',
+                            'w-10 h-10 flex items-center justify-center rounded-xl',
+                            'transition-all duration-300 shadow-sm',
                             config.iconBg,
                             config.iconColor
                         )}
@@ -155,124 +158,125 @@ export function TaskCard({ task }: TaskCardProps) {
                 </motion.button>
 
                 {/* Task Content */}
-                <div className="flex-1 min-w-0">
-                    <motion.p
+                <div className="flex-1 min-w-0 pt-0.5">
+                    <motion.h3
                         layout
                         className={cn(
-                            'text-base font-medium text-text-primary leading-snug',
+                            'text-lg font-semibold text-text-primary leading-tight mb-1',
                             task.status === 'done' && 'line-through text-text-secondary'
                         )}
                     >
                         {task.title}
-                    </motion.p>
+                    </motion.h3>
 
-                    {/* Show date AND start-end time if scheduled */}
-                    {task.calendarSlot && task.calendarSlot.date && (
-                        <motion.div
-                            layout
-                            className="flex flex-wrap items-center gap-2 mt-2"
-                        >
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="flex items-center gap-1.5 px-2 py-1 bg-accent/10 text-accent rounded-lg text-xs font-medium"
-                            >
+                    {/* Metadata Row */}
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                        {/* Date & Time if Scheduled */}
+                        {task.calendarSlot && task.calendarSlot.date && (
+                            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-accent/10 text-accent rounded-lg text-xs font-semibold tracking-wide">
                                 <Clock className="w-3 h-3" />
-                                <span>
-                                    {formatShortDate(new Date(task.calendarSlot.date + 'T00:00:00'))} • {formatTime(task.calendarSlot.startTime)} - {formatTime(task.calendarSlot.endTime)}
-                                </span>
-                            </motion.div>
-                        </motion.div>
-                    )}
+                                {formatShortDate(new Date(task.calendarSlot.date + 'T00:00:00'))} • {formatTime(task.calendarSlot.startTime)} - {formatTime(task.calendarSlot.endTime)}
+                            </span>
+                        )}
 
-                    {/* Goal badge */}
-                    {task.goalId && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="inline-flex items-center gap-1 px-2 py-1 mt-2 bg-[#8338ec]/10 text-[#8338ec] rounded-lg text-xs font-medium"
-                        >
-                            <Target className="w-3 h-3" />
-                            <span>Goal linked</span>
-                        </motion.div>
-                    )}
+                        {/* Goal badge */}
+                        {task.goalId && (
+                            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-[#8338ec]/10 text-[#8338ec] rounded-lg text-xs font-semibold tracking-wide">
+                                <Target className="w-3 h-3" />
+                                Goal linked
+                            </span>
+                        )}
+                    </div>
                 </div>
 
-                {/* Priority Star */}
-                <motion.button
-                    onClick={handlePriorityToggle}
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="flex-shrink-0 p-1"
-                >
-                    <Star
-                        className={cn(
-                            'w-5 h-5 transition-colors',
-                            task.priority
-                                ? 'fill-[#ffbe0b] text-[#ffbe0b] priority-star'
-                                : 'text-text-secondary/30 hover:text-[#ffbe0b]/50'
-                        )}
-                    />
-                </motion.button>
-
-                {/* 3-Dot Menu */}
-                <AnimatePresence>
-                    {(showMenu || isMenuOpen) && task.status !== 'done' && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            className="relative"
+                {/* Right Side Actions */}
+                <div className="flex flex-col items-end gap-2">
+                    {/* Priority Star - only for non-completed tasks */}
+                    {task.status !== 'done' && (
+                        <motion.button
+                            onClick={handlePriorityToggle}
+                            whileHover={{ scale: 1.2, rotate: 15 }}
+                            whileTap={{ scale: 0.9 }}
+                            className="p-1.5 rounded-full hover:bg-bg-tertiary transition-colors"
                         >
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    isMenuOpen ? closeContextMenu() : openContextMenu(task.id);
-                                }}
-                                className="p-1.5 rounded-lg hover:bg-bg-secondary transition-colors"
-                            >
-                                <MoreVertical className="w-4 h-4 text-text-secondary" />
-                            </button>
-
-                            <AnimatePresence>
-                                {isMenuOpen && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                                        className="absolute right-0 top-full mt-1 py-1 bg-bg-primary border border-border rounded-xl shadow-xl z-50 min-w-[140px]"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <button
-                                            onClick={handleDelete}
-                                            className="w-full px-3 py-2 flex items-center gap-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                            Delete
-                                        </button>
-                                    </motion.div>
+                            <Star
+                                className={cn(
+                                    'w-5 h-5 transition-all duration-300',
+                                    task.priority
+                                        ? 'fill-[#ffbe0b] text-[#ffbe0b] drop-shadow-[0_0_8px_rgba(255,190,11,0.5)]'
+                                        : 'text-text-secondary/30 hover:text-[#ffbe0b]/50'
                                 )}
-                            </AnimatePresence>
-                        </motion.div>
+                            />
+                        </motion.button>
                     )}
-                </AnimatePresence>
 
-                {/* Status indicator dot */}
-                {task.status === 'started' && (
-                    <motion.div
-                        animate={{
-                            scale: [1, 1.3, 1],
-                            opacity: [0.7, 1, 0.7],
-                        }}
-                        transition={{
-                            duration: 1.5,
-                            repeat: Infinity,
-                            ease: 'easeInOut',
-                        }}
-                        className="absolute top-2 right-2 w-2 h-2 bg-[#ffbe0b] rounded-full"
-                    />
-                )}
+                    {/* 3-Dot Menu - now shows for ALL tasks including completed */}
+                    <AnimatePresence>
+                        {(showMenu || isMenuOpen) && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                className="relative"
+                            >
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        isMenuOpen ? closeContextMenu() : openContextMenu(task.id);
+                                    }}
+                                    className="p-1.5 rounded-lg hover:bg-bg-tertiary transition-colors text-text-secondary hover:text-text-primary"
+                                >
+                                    <MoreVertical className="w-4 h-4" />
+                                </button>
+
+                                <AnimatePresence>
+                                    {isMenuOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                                            className="absolute right-0 top-full mt-1 w-36 bg-bg-primary border border-border/50 rounded-xl shadow-xl z-50 overflow-hidden"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {/* Restore option for completed tasks */}
+                                            {task.status === 'done' && (
+                                                <button
+                                                    onClick={handleRestore}
+                                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-sm text-accent hover:bg-accent/10 transition-colors font-medium"
+                                                >
+                                                    <RotateCcw className="w-4 h-4" />
+                                                    Restore
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={handleDelete}
+                                                className="w-full px-4 py-2.5 flex items-center gap-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors font-medium"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                Delete
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
+
+            {/* Progress Bar for Started Tasks */}
+            {task.status === 'started' && (
+                <motion.div
+                    layoutId={`progress-${task.id}`}
+                    className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#ffbe0b]/30 rounded-full overflow-hidden"
+                >
+                    <motion.div
+                        animate={{ x: ['-100%', '100%'] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                        className="w-1/2 h-full bg-[#ffbe0b]"
+                    />
+                </motion.div>
+            )}
         </motion.div>
     );
 }

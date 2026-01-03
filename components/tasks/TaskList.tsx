@@ -10,7 +10,7 @@ import { useTasks } from '@/lib/hooks/useTasks';
 import { useAppStore } from '@/lib/store/app';
 import { staggerContainer, fadeIn } from '@/lib/utils/animations';
 import { cn } from '@/lib/utils/cn';
-import { format, isToday, isFuture, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 
 export function TaskList() {
     const { tasks, loading } = useTasks();
@@ -48,6 +48,7 @@ export function TaskList() {
         }
 
         // Sort: priority first, then started, paused, default
+        // Memoize the sort function for stability
         const statusOrder = { started: 0, paused: 1, default: 2, done: 3 };
         return filtered.sort((a, b) => {
             // Priority first
@@ -67,7 +68,7 @@ export function TaskList() {
 
         const today = format(new Date(), 'yyyy-MM-dd');
         const todayC = filteredTasks.filter((t) => {
-            if (!t.completedAt) return true; // Recently completed, show in today
+            if (!t.completedAt) return true;
             const completedDate = t.completedAt.toDate ? format(t.completedAt.toDate(), 'yyyy-MM-dd') : today;
             return completedDate === today;
         });
@@ -95,11 +96,13 @@ export function TaskList() {
     }
 
     return (
-        <div className="space-y-4">
-            {/* Filters */}
-            <TaskFilters />
+        <div className="space-y-6">
+            {/* Filters with better spacing */}
+            <div className="sticky top-14 z-30 bg-bg-primary/95 backdrop-blur-xl py-2 -mx-4 px-4 border-b border-border/50">
+                <TaskFilters />
+            </div>
 
-            {/* Add Task Button */}
+            {/* Add Task Button - Enhanced */}
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -109,13 +112,17 @@ export function TaskList() {
                     onClick={() => openTaskForm()}
                     variant="outline"
                     className={cn(
-                        'w-full justify-center border-dashed border-2',
-                        'hover:border-accent hover:bg-accent/5',
-                        'amoled:hover:border-[#3a86ff] amoled:hover:bg-[#3a86ff]/10'
+                        'w-full justify-center border-dashed border-2 py-6 rounded-2xl',
+                        'hover:border-accent hover:bg-accent/5 transition-all duration-300',
+                        'group'
                     )}
-                    icon={<Plus className="w-4 h-4" />}
                 >
-                    Add Task
+                    <div className="flex items-center gap-2 text-text-secondary group-hover:text-accent font-medium">
+                        <div className="p-1 rounded-full bg-bg-secondary group-hover:bg-accent/20 transition-colors">
+                            <Plus className="w-4 h-4" />
+                        </div>
+                        Create New Task
+                    </div>
                 </Button>
             </motion.div>
 
@@ -124,13 +131,13 @@ export function TaskList() {
                     variants={fadeIn}
                     initial="hidden"
                     animate="visible"
-                    className="text-center py-16"
+                    className="text-center py-20"
                 >
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-accent/20 to-[#8338ec]/20 flex items-center justify-center">
-                        <Plus className="w-8 h-8 text-accent" />
+                    <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-accent/20 to-blue-500/20 flex items-center justify-center shadow-inner">
+                        <Plus className="w-10 h-10 text-accent" />
                     </div>
-                    <p className="text-text-primary font-medium mb-1">No tasks yet</p>
-                    <p className="text-sm text-text-secondary">Create your first task to get started</p>
+                    <p className="text-xl font-semibold text-text-primary mb-2">No tasks yet</p>
+                    <p className="text-text-secondary">Create your first task to get started</p>
                 </motion.div>
             ) : filteredTasks.length === 0 ? (
                 <motion.div
@@ -144,27 +151,32 @@ export function TaskList() {
             ) : (
                 <>
                     {/* Active task indicator */}
-                    {startedCount > 0 && taskFilter === 'all' && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            className="px-3 py-2 bg-gradient-to-r from-[#06d6a0]/20 to-[#00b894]/10 rounded-xl border border-[#06d6a0]/30"
-                        >
-                            <p className="text-sm font-medium text-[#06d6a0]">
-                                🎯 {startedCount} task{startedCount > 1 ? 's' : ''} in progress
-                            </p>
-                        </motion.div>
-                    )}
+                    <AnimatePresence>
+                        {startedCount > 0 && taskFilter === 'all' && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                                exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                                className="px-4 py-3 bg-gradient-to-r from-[#06d6a0]/20 to-[#00b894]/10 rounded-2xl border border-[#06d6a0]/30 shadow-sm"
+                            >
+                                <p className="text-sm font-semibold text-[#06d6a0] flex items-center gap-2">
+                                    <span className="relative flex h-3 w-3">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#06d6a0] opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-[#06d6a0]"></span>
+                                    </span>
+                                    {startedCount} task{startedCount > 1 ? 's' : ''} in progress
+                                </p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
-                    {/* Task List */}
+                    {/* Task List - improved layout animation */}
                     {taskFilter !== 'completed' ? (
                         <motion.div
-                            variants={staggerContainer}
-                            initial="hidden"
-                            animate="visible"
+                            layout
                             className="space-y-3"
                         >
-                            <AnimatePresence mode="popLayout">
+                            <AnimatePresence mode="popLayout" initial={false}>
                                 {filteredTasks.map((task) => (
                                     <TaskCard key={task.id} task={task} />
                                 ))}
@@ -175,19 +187,16 @@ export function TaskList() {
                             {/* Today's Completed */}
                             {todayCompleted.length > 0 && (
                                 <div>
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <CheckCircle2 className="w-4 h-4 text-[#06d6a0]" />
-                                        <h3 className="text-sm font-medium text-text-secondary">
-                                            Completed Today ({todayCompleted.length})
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <CheckCircle2 className="w-5 h-5 text-[#06d6a0]" />
+                                        <h3 className="text-base font-semibold text-text-primary">
+                                            Completed Today <span className="text-text-secondary font-normal">({todayCompleted.length})</span>
                                         </h3>
                                     </div>
                                     <motion.div
-                                        variants={staggerContainer}
-                                        initial="hidden"
-                                        animate="visible"
-                                        className="space-y-2"
+                                        className="space-y-3"
                                     >
-                                        <AnimatePresence mode="popLayout">
+                                        <AnimatePresence mode="popLayout" initial={false}>
                                             {todayCompleted.map((task) => (
                                                 <TaskCard key={task.id} task={task} />
                                             ))}
@@ -198,13 +207,13 @@ export function TaskList() {
 
                             {/* Past Completed (Collapsed) */}
                             {pastCompleted.length > 0 && (
-                                <div className="pt-4">
+                                <div className="pt-6 border-t border-border/50">
                                     <button
                                         onClick={() => setShowPastCompleted(!showPastCompleted)}
-                                        className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
+                                        className="flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors p-2 hover:bg-bg-secondary rounded-lg"
                                     >
                                         <ChevronDown className={cn(
-                                            'w-4 h-4 transition-transform',
+                                            'w-4 h-4 transition-transform duration-300',
                                             showPastCompleted && 'rotate-180'
                                         )} />
                                         <span>Past Completed ({pastCompleted.length})</span>
@@ -216,7 +225,7 @@ export function TaskList() {
                                                 initial={{ opacity: 0, height: 0 }}
                                                 animate={{ opacity: 1, height: 'auto' }}
                                                 exit={{ opacity: 0, height: 0 }}
-                                                className="mt-2 space-y-2"
+                                                className="mt-3 space-y-3"
                                             >
                                                 {pastCompleted.map((task) => (
                                                     <TaskCard key={task.id} task={task} />

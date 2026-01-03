@@ -40,9 +40,9 @@ export function DailyCalendar() {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [editingEvent, setEditingEvent] = useState<CalendarEventType | null>(null);
 
-    const hours = useMemo(() => generateHourSlots(6, 23), []);
+    const hours = useMemo(() => generateHourSlots(0, 23), []);
     const isToday = checkIsToday(selectedDate);
-    const startHour = 6; // First hour displayed on calendar
+    const startHour = 0; // First hour displayed on calendar
 
     const sensors = useSensors(
         useSensor(PointerSensor, {

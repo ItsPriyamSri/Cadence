@@ -16,17 +16,17 @@ interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-    primary: 'bg-accent text-white hover:bg-accent/90 active:bg-accent/80',
-    secondary: 'bg-bg-secondary text-text-primary hover:bg-bg-tertiary',
-    ghost: 'bg-transparent text-text-primary hover:bg-bg-secondary',
-    outline: 'bg-transparent border border-border text-text-primary hover:bg-bg-secondary',
-    danger: 'bg-red-500 text-white hover:bg-red-600 active:bg-red-700',
+    primary: 'bg-gradient-to-r from-accent to-[#5856D6] text-white hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98]',
+    secondary: 'bg-bg-secondary text-text-primary hover:bg-bg-tertiary active:scale-[0.98]',
+    ghost: 'bg-transparent text-text-primary hover:bg-bg-secondary active:bg-bg-tertiary',
+    outline: 'bg-transparent border-2 border-border text-text-primary hover:border-accent/50 hover:bg-accent/5 active:bg-accent/10',
+    danger: 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:shadow-lg hover:shadow-red-500/25 active:scale-[0.98]',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
     sm: 'px-3 py-1.5 text-xs rounded-lg gap-1.5',
-    md: 'px-4 py-2 text-sm rounded-xl gap-2',
-    lg: 'px-6 py-3 text-base rounded-2xl gap-2',
+    md: 'px-4 py-2.5 text-sm rounded-xl gap-2',
+    lg: 'px-6 py-3.5 text-base rounded-2xl gap-2.5',
 };
 
 export function Button({
@@ -41,13 +41,16 @@ export function Button({
 }: ButtonProps) {
     return (
         <motion.button
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: disabled || loading ? 1 : 1.01 }}
+            whileTap={{ scale: disabled || loading ? 1 : 0.98 }}
             className={cn(
-                'inline-flex items-center justify-center font-medium transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
-                'disabled:opacity-50 disabled:pointer-events-none',
+                'inline-flex items-center justify-center font-semibold',
+                'transition-all duration-200',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary',
+                'disabled:opacity-50 disabled:pointer-events-none disabled:grayscale',
                 variantStyles[variant],
                 sizeStyles[size],
+                loading && 'cursor-wait',
                 className
             )}
             disabled={disabled || loading}
