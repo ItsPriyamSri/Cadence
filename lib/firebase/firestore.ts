@@ -77,6 +77,7 @@ export interface Goal {
     startDate: Timestamp;
     endDate: Timestamp;
     createdAt: Timestamp;
+    progress: number;
 }
 
 export interface UserProfile {
