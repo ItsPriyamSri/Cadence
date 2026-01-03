@@ -14,7 +14,7 @@ import {
     useDraggable,
     useDroppable,
 } from '@dnd-kit/core';
-import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon, GripVertical } from 'lucide-react';
 import { ActiveTaskBanner } from './ActiveTaskBanner';
 import { CalendarEvent } from './CalendarEvent';
 import { EventTimeEditor } from './EventTimeEditor';
@@ -46,10 +46,10 @@ export function DailyCalendar() {
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
-            activationConstraint: { distance: 10 },
+            activationConstraint: { distance: 8 },
         }),
         useSensor(TouchSensor, {
-            activationConstraint: { delay: 200, tolerance: 5 },
+            activationConstraint: { delay: 150, tolerance: 8 },
         })
     );
 
@@ -165,7 +165,7 @@ export function DailyCalendar() {
                 </div>
 
                 {/* Time Grid with Overlapping Events */}
-                <div className="flex-1 overflow-auto relative">
+                <div className="flex-1 overflow-auto relative pb-36 md:pb-4">
                     {/* Hour rows (background) */}
                     {hours.map((hour) => (
                         <HourRow key={hour} hour={hour} date={dateKey} activeId={activeId} />
@@ -182,15 +182,15 @@ export function DailyCalendar() {
                     ))}
                 </div>
 
-                {/* Unscheduled Tasks Area */}
-                <div className="border-t border-border p-4 bg-bg-secondary/50">
+                {/* Unscheduled Tasks Area - Fixed at bottom on mobile */}
+                <div className="fixed md:relative bottom-16 md:bottom-0 left-0 right-0 border-t border-border p-4 bg-bg-primary/95 md:bg-bg-secondary/50 backdrop-blur-xl z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] md:shadow-none">
                     <div className="flex items-center gap-2 mb-3">
                         <CalendarIcon className="w-4 h-4 text-text-secondary" />
                         <h3 className="text-sm font-medium text-text-secondary">Drag to schedule</h3>
                     </div>
 
                     {unscheduledTasks.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 max-h-24 overflow-auto">
                             {unscheduledTasks.slice(0, 8).map((task) => (
                                 <DraggableTask key={task.id} task={task} />
                             ))}
@@ -256,21 +256,24 @@ function DraggableTask({ task }: { task: any }) {
     });
 
     return (
-        <motion.div
+        <div
             ref={setNodeRef}
             {...listeners}
             {...attributes}
-            whileHover={{ scale: 1.02 }}
+            style={{ touchAction: 'none' }}
             className={cn(
-                'px-3 py-2 bg-bg-primary border border-border rounded-xl text-sm font-medium',
+                'select-none px-3 py-2 bg-bg-primary border border-border rounded-xl text-sm font-medium',
                 'cursor-grab active:cursor-grabbing transition-all',
                 'hover:border-[#3a86ff]/50 hover:shadow-md',
+                'flex items-center gap-2',
                 isDragging && 'opacity-50'
             )}
         >
-            {task.title.slice(0, 25)}
-            {task.title.length > 25 && '...'}
-        </motion.div>
+            <GripVertical className="w-3 h-3 text-text-secondary/50 flex-shrink-0" />
+            <span className="truncate max-w-[120px]">
+                {task.title}
+            </span>
+        </div>
     );
 }
 
