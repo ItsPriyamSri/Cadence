@@ -1,16 +1,32 @@
 # Cadence
 
-A process-focused productivity PWA that celebrates **starting tasks** over completing them.
+A premium productivity PWA that celebrates **starting tasks** over completing them.
 
-## Features
+## ✨ Features
 
-- 📋 **Tasks** - Track tasks with status states (default → started → paused → done)
-- 📅 **Calendar** - Drag-and-drop task scheduling with daily time blocks
-- 📝 **Brain Dump** - Quick capture notes with auto-save and convert-to-task
-- 🎯 **Goals** - Weekly/monthly goals with progress tracking
+### Tasks
+- 📋 **Status Flow** - Default → Started → Paused → Done
+- ⭐ **Priority System** - Star tasks to pin them to the top
+- 🎉 **Confetti Celebration** - Celebrate when completing tasks
+- 🔍 **Smart Filters** - All, Today, Upcoming, Unscheduled, Completed
+
+### Calendar
+- 📅 **Daily View** - 24-hour timeline (12 AM - 11 PM)
+- 🖱️ **Drag & Drop** - Drag tasks from inbox to schedule them
+- ⏱️ **Duration Editor** - Click events to adjust start/end times (15-min intervals)
 - 🔄 **Bidirectional Sync** - Tasks ↔ Calendar events stay in sync
-- 📱 **PWA** - Works offline, installable on mobile/desktop
-- 🌙 **Dark Mode** - System theme support
+
+### Notes (Brain Dump)
+- 📝 **Quick Capture** - Auto-saving notes
+- 🎯 **Goals Tile** - Collapsible goals section with weekly/monthly/quarterly tracking
+
+### Themes
+- 🌙 **AMOLED Dark** - True black with vibrant accent colors
+- ☀️ **Light Mode** - Clean, minimal interface
+
+### PWA
+- 📱 **Installable** - Add to home screen on mobile/desktop
+- 🔔 **Offline Ready** - Works without internet
 
 ## Tech Stack
 
@@ -18,9 +34,9 @@ A process-focused productivity PWA that celebrates **starting tasks** over compl
 - **Styling**: Tailwind CSS
 - **Animations**: Framer Motion
 - **Drag & Drop**: @dnd-kit/core
-- **State**: Zustand
+- **State**: Zustand (optimistic updates)
 - **Database**: Firebase Firestore (real-time sync)
-- **Auth**: Firebase Auth (Google + Email)
+- **Auth**: Firebase Auth (Google Sign-In)
 
 ## Getting Started
 
@@ -32,15 +48,25 @@ A process-focused productivity PWA that celebrates **starting tasks** over compl
 2. **Configure Firebase**:
    - Copy `.env.local.example` to `.env.local`
    - Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-   - Enable Firestore and Authentication (Google + Email providers)
+   - Enable Firestore and Authentication (Google provider)
    - Add your Firebase config keys to `.env.local`
 
-3. **Run the dev server**:
+3. **Create Firestore Indexes** (required for queries):
+   - Go to Firebase Console → Firestore → Indexes
+   - Create these composite indexes:
+
+   | Collection | Fields |
+   |------------|--------|
+   | `tasks` | `userId` (Asc) + `order` (Asc) |
+   | `notes` | `userId` (Asc) + `updatedAt` (Desc) |
+   | `goals` | `userId` (Asc) + `endDate` (Asc) |
+
+4. **Run the dev server**:
    ```bash
    npm run dev
    ```
 
-4. **Open** [http://localhost:3000](http://localhost:3000)
+5. **Open** [http://localhost:3000](http://localhost:3000)
 
 ## Firebase Setup
 
@@ -80,19 +106,18 @@ service cloud.firestore {
 }
 ```
 
-### Firestore Indexes
-Create these composite indexes in Firebase Console:
-- `tasks`: userId (asc) + status (asc)
-- `tasks`: userId (asc) + order (asc)
-- `calendar_events`: userId (asc) + date (asc) + startTime (asc)
-- `notes`: userId (asc) + updatedAt (desc)
-- `goals`: userId (asc) + endDate (desc)
-
 ## Deployment
 
-Deploy to Vercel:
+### Vercel (Recommended)
+1. Push to GitHub
+2. Import project in [vercel.com](https://vercel.com)
+3. Add environment variables in Vercel dashboard
+4. Add your Vercel domain to Firebase Auth → Authorized domains
+
 ```bash
 vercel --prod
 ```
 
-Add environment variables in Vercel dashboard.
+## License
+
+MIT
