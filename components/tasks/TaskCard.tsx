@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Circle, Play, Pause, CheckCircle, Clock, Target, Star,
-    MoreVertical, Trash2, RotateCcw
+    MoreVertical, Trash2, RotateCcw, Pencil
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { Task } from '@/lib/firebase/firestore';
@@ -58,7 +58,7 @@ const statusConfig = {
 export function TaskCard({ task }: TaskCardProps) {
     const config = statusConfig[task.status];
     const Icon = config.icon;
-    const { openStatusModal, contextMenuTaskId, openContextMenu, closeContextMenu } = useAppStore();
+    const { openStatusModal, openTaskForm, contextMenuTaskId, openContextMenu, closeContextMenu } = useAppStore();
     const [isAnimating, setIsAnimating] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
@@ -99,6 +99,11 @@ export function TaskCard({ task }: TaskCardProps) {
     const handleRestore = async () => {
         closeContextMenu();
         await updateTaskStatus(task.id, 'default');
+    };
+
+    const handleEdit = () => {
+        closeContextMenu();
+        openTaskForm(task.id);
     };
 
     const handleTouchStart = () => {
@@ -246,6 +251,16 @@ export function TaskCard({ task }: TaskCardProps) {
                                                 >
                                                     <RotateCcw className="w-4 h-4" />
                                                     Restore
+                                                </button>
+                                            )}
+                                            {/* Edit option for non-completed tasks */}
+                                            {task.status !== 'done' && (
+                                                <button
+                                                    onClick={handleEdit}
+                                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-sm text-text-primary hover:bg-bg-secondary transition-colors font-medium"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                    Edit
                                                 </button>
                                             )}
                                             <button

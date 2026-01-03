@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, X } from 'lucide-react';
+import { Clock, Calendar, CalendarOff, Trash2 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { CalendarEvent } from '@/lib/firebase/firestore';
-import { updateCalendarEvent } from '@/lib/actions/calendar';
-import { useTasksStore } from '@/lib/store/optimistic';
+import { updateCalendarEvent, unscheduleTask, deleteCalendarEvent } from '@/lib/actions/calendar';
 import { updateTask } from '@/lib/actions/tasks';
 import { cn } from '@/lib/utils/cn';
+import { format, addDays, subDays } from 'date-fns';
 
 interface EventTimeEditorProps {
     event: CalendarEvent | null;
@@ -39,13 +39,41 @@ function formatTimeDisplay(time: string): string {
     return `${displayHour}:${minutes.toString().padStart(2, '0')} ${ampm}`;
 }
 
+function formatDateDisplay(dateStr: string): string {
+    const date = new Date(dateStr + 'T00:00:00');
+    return format(date, 'EEE, MMM d');
+}
+
+// Generate next 14 days for date picker
+function generateDateOptions(currentDate: string): string[] {
+    const dates: string[] = [];
+    const today = new Date();
+
+    // Include 7 days before and 14 days after
+    for (let i = -7; i <= 14; i++) {
+        const date = addDays(today, i);
+        dates.push(format(date, 'yyyy-MM-dd'));
+    }
+
+    // Make sure current date is included
+    if (!dates.includes(currentDate)) {
+        dates.push(currentDate);
+        dates.sort();
+    }
+
+    return dates;
+}
+
 export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps) {
+    const [date, setDate] = useState(event?.date || format(new Date(), 'yyyy-MM-dd'));
     const [startTime, setStartTime] = useState(event?.startTime || '09:00');
     const [endTime, setEndTime] = useState(event?.endTime || '10:00');
     const [isSaving, setIsSaving] = useState(false);
+    const [isUnscheduling, setIsUnscheduling] = useState(false);
 
     React.useEffect(() => {
         if (event) {
+            setDate(event.date);
             setStartTime(event.startTime);
             setEndTime(event.endTime);
         }
@@ -56,8 +84,9 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
 
         setIsSaving(true);
         try {
-            // Update calendar event
+            // Update calendar event with new date and times
             await updateCalendarEvent(event.id, {
+                date,
                 startTime,
                 endTime,
             });
@@ -66,7 +95,7 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
             if (event.taskId) {
                 await updateTask(event.taskId, {
                     calendarSlot: {
-                        date: event.date,
+                        date,
                         startTime,
                         endTime,
                         eventId: event.id,
@@ -76,9 +105,23 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
 
             onClose();
         } catch (error) {
-            console.error('Failed to update event time:', error);
+            console.error('Failed to update event:', error);
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleUnschedule = async () => {
+        if (!event || !event.taskId) return;
+
+        setIsUnscheduling(true);
+        try {
+            await unscheduleTask(event.taskId, event.id);
+            onClose();
+        } catch (error) {
+            console.error('Failed to unschedule task:', error);
+        } finally {
+            setIsUnscheduling(false);
         }
     };
 
@@ -102,18 +145,42 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
 
     if (!event) return null;
 
+    const dateOptions = generateDateOptions(event.date);
+
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Edit Time">
-            <div className="p-4 space-y-6">
+        <Modal isOpen={isOpen} onClose={onClose} title="Edit Schedule">
+            <div className="p-4 space-y-5">
                 {/* Event Title */}
-                <div className="text-center">
-                    <p className="text-lg font-semibold text-text-primary">{event.title}</p>
-                    <p className="text-sm text-text-secondary mt-1">{event.date}</p>
+                <div className="text-center pb-2 border-b border-border/50">
+                    <p className="text-lg font-bold text-text-primary">{event.title}</p>
+                </div>
+
+                {/* Date Picker */}
+                <div>
+                    <label className="flex items-center gap-2 text-sm font-medium text-text-secondary mb-2">
+                        <Calendar className="w-4 h-4" />
+                        Date
+                    </label>
+                    <select
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        className={cn(
+                            'w-full p-3 rounded-xl border border-border bg-bg-secondary',
+                            'text-text-primary focus:outline-none focus:border-accent',
+                            'transition-colors'
+                        )}
+                    >
+                        {dateOptions.map((d) => (
+                            <option key={d} value={d}>
+                                {formatDateDisplay(d)}
+                                {d === format(new Date(), 'yyyy-MM-dd') && ' (Today)'}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 {/* Time Pickers */}
                 <div className="grid grid-cols-2 gap-4">
-                    {/* Start Time */}
                     <div>
                         <label className="block text-sm font-medium text-text-secondary mb-2">
                             Start Time
@@ -135,7 +202,6 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
                         </select>
                     </div>
 
-                    {/* End Time */}
                     <div>
                         <label className="block text-sm font-medium text-text-secondary mb-2">
                             End Time
@@ -189,23 +255,31 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
                     ))}
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-3">
-                    <Button
-                        variant="outline"
-                        onClick={onClose}
-                        className="flex-1"
+                {/* Save Button */}
+                <Button
+                    onClick={handleSave}
+                    loading={isSaving}
+                    className="w-full"
+                >
+                    Save Changes
+                </Button>
+
+                {/* Unschedule Option - Only if linked to a task */}
+                {event.taskId && (
+                    <button
+                        onClick={handleUnschedule}
+                        disabled={isUnscheduling}
+                        className={cn(
+                            'w-full flex items-center justify-center gap-2 p-3 rounded-xl',
+                            'text-red-500 hover:bg-red-500/10 transition-colors',
+                            'text-sm font-medium',
+                            isUnscheduling && 'opacity-50 cursor-not-allowed'
+                        )}
                     >
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleSave}
-                        loading={isSaving}
-                        className="flex-1"
-                    >
-                        Save
-                    </Button>
-                </div>
+                        <CalendarOff className="w-4 h-4" />
+                        {isUnscheduling ? 'Removing...' : 'Remove from Calendar'}
+                    </button>
+                )}
             </div>
         </Modal>
     );

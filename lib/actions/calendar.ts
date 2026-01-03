@@ -201,3 +201,28 @@ export async function handleEventResize(eventId: string, newEndTime: string) {
         console.error('Failed to resize event:', error);
     }
 }
+
+export async function unscheduleTask(taskId: string, eventId: string) {
+    // Optimistic updates
+    useTasksStore.getState().updateTask(taskId, { calendarSlot: null });
+    useCalendarStore.getState().removeEvent(eventId);
+
+    // Haptic feedback
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(30);
+    }
+
+    // Background sync
+    try {
+        // Remove calendar slot from task
+        const taskRef = doc(db, 'tasks', taskId);
+        await updateDoc(taskRef, { calendarSlot: null });
+
+        // Delete the calendar event
+        const eventRef = doc(db, 'calendar_events', eventId);
+        await deleteDoc(eventRef);
+    } catch (error) {
+        console.error('Failed to unschedule task:', error);
+        throw error;
+    }
+}

@@ -77,11 +77,28 @@ export async function createTask(input: CreateTaskInput): Promise<string> {
 }
 
 export async function updateTask(taskId: string, updates: Partial<Task>) {
+    // Optimistic update for task
     useTasksStore.getState().updateTask(taskId, updates);
+
+    // Get the task to check if it has a linked calendar event
+    const task = useTasksStore.getState().tasks.find(t => t.id === taskId);
+
+    // If title is being updated and task has calendar event, sync the title
+    if (updates.title && task?.calendarSlot?.eventId) {
+        useCalendarStore.getState().updateEvent(task.calendarSlot.eventId, {
+            title: updates.title,
+        });
+    }
 
     try {
         const taskRef = doc(db, 'tasks', taskId);
         await updateDoc(taskRef, updates);
+
+        // Sync title to calendar event in Firestore
+        if (updates.title && task?.calendarSlot?.eventId) {
+            const eventRef = doc(db, 'calendar_events', task.calendarSlot.eventId);
+            await updateDoc(eventRef, { title: updates.title });
+        }
     } catch (error) {
         console.error('Failed to update task:', error);
     }
