@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     DndContext,
@@ -14,16 +14,16 @@ import {
     useDraggable,
     useDroppable,
 } from '@dnd-kit/core';
-import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon, GripVertical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon, GripVertical, X } from 'lucide-react';
 import { ActiveTaskBanner } from './ActiveTaskBanner';
 import { CalendarEvent } from './CalendarEvent';
 import { EventTimeEditor } from './EventTimeEditor';
 import { Button } from '@/components/ui/Button';
 import { useCalendarEvents } from '@/lib/hooks/useCalendarEvents';
-import { useTasks } from '@/lib/hooks/useTasks';
-import { handleTaskDropOnCalendar } from '@/lib/actions/calendar';
+import { useTasks, useActiveTasks } from '@/lib/hooks/useTasks';
+import { handleTaskDropOnCalendar, rescheduleEvent } from '@/lib/actions/calendar';
 import { useAppStore } from '@/lib/store/app';
-import { CalendarEvent as CalendarEventType } from '@/lib/firebase/firestore';
+import { CalendarEvent as CalendarEventType, Task } from '@/lib/firebase/firestore';
 import { generateHourSlots, formatDisplayDate, formatDateKey, formatHour, addDays, subDays, isToday as checkIsToday } from '@/lib/utils/dates';
 import { fadeIn } from '@/lib/utils/animations';
 import { cn } from '@/lib/utils/cn';
@@ -31,18 +31,87 @@ import { format } from 'date-fns';
 
 const HOUR_HEIGHT = 72; // Height of each hour slot in pixels
 
+// Current time indicator component
+function CurrentTimeIndicator({ startHour }: { startHour: number }) {
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        // Update every minute
+        const interval = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 60000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const hours = currentTime.getHours();
+    const minutes = currentTime.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const topPosition = ((totalMinutes - startHour * 60) / 60) * HOUR_HEIGHT;
+
+    // Only show if within visible range
+    if (hours < startHour || hours > 23) return null;
+
+    return (
+        <div
+            className="absolute left-14 right-0 z-20 pointer-events-none"
+            style={{ top: `${topPosition}px` }}
+        >
+            <div className="relative flex items-center">
+                {/* Time label */}
+                <div className="absolute -left-14 -top-2 text-[10px] font-bold text-[#ff6b6b] bg-[#ff6b6b]/10 px-1.5 py-0.5 rounded">
+                    {format(currentTime, 'h:mm')}
+                </div>
+                {/* Dot */}
+                <div className="w-2.5 h-2.5 rounded-full bg-[#ff6b6b] shadow-[0_0_8px_rgba(255,107,107,0.6)] -ml-1" />
+                {/* Line */}
+                <div className="flex-1 h-[2px] bg-[#ff6b6b] shadow-[0_0_4px_rgba(255,107,107,0.4)]" />
+            </div>
+        </div>
+    );
+}
+
 export function DailyCalendar() {
     const { selectedDate, setSelectedDate } = useAppStore();
     const dateKey = formatDateKey(selectedDate);
     const { events, loading } = useCalendarEvents(dateKey);
     const { tasks } = useTasks();
+    const { activeTasks } = useActiveTasks();
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [hasScrolled, setHasScrolled] = useState(false);
 
     const [activeId, setActiveId] = useState<string | null>(null);
+    const [dragType, setDragType] = useState<'task' | 'event' | null>(null);
     const [editingEvent, setEditingEvent] = useState<CalendarEventType | null>(null);
+    const [showBanner, setShowBanner] = useState(true);
 
     const hours = useMemo(() => generateHourSlots(0, 23), []);
     const isToday = checkIsToday(selectedDate);
     const startHour = 0; // First hour displayed on calendar
+
+    // Auto-scroll to current time on mount (only for today)
+    useEffect(() => {
+        if (isToday && !hasScrolled && scrollContainerRef.current) {
+            const now = new Date();
+            const currentHour = now.getHours();
+            // Scroll to current hour minus 1 for context
+            const scrollToHour = Math.max(0, currentHour - 1);
+            const scrollPosition = scrollToHour * HOUR_HEIGHT;
+
+            setTimeout(() => {
+                scrollContainerRef.current?.scrollTo({
+                    top: scrollPosition,
+                    behavior: 'smooth',
+                });
+                setHasScrolled(true);
+            }, 100);
+        }
+    }, [isToday, hasScrolled]);
+
+    // Reset scroll flag when date changes
+    useEffect(() => {
+        setHasScrolled(false);
+    }, [dateKey]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -55,10 +124,13 @@ export function DailyCalendar() {
 
     const handleDragStart = (event: DragStartEvent) => {
         setActiveId(event.active.id as string);
+        const data = event.active.data.current;
+        setDragType(data?.type === 'event' ? 'event' : 'task');
     };
 
     const handleDragEnd = async (event: DragEndEvent) => {
         setActiveId(null);
+        setDragType(null);
 
         const { active, over } = event;
         if (!over) return;
@@ -68,6 +140,22 @@ export function DailyCalendar() {
         const dropDate = overId.substring(0, lastUnderscoreIndex);
         const dropHour = parseInt(overId.substring(lastUnderscoreIndex + 1), 10);
 
+        const activeData = active.data.current;
+
+        // Handle event rescheduling
+        if (activeData?.type === 'event') {
+            const eventToReschedule = events.find(e => e.id === active.id);
+            if (eventToReschedule) {
+                try {
+                    await rescheduleEvent(eventToReschedule.id, dropDate, dropHour, eventToReschedule.taskId);
+                } catch (error) {
+                    console.error('Failed to reschedule event:', error);
+                }
+            }
+            return;
+        }
+
+        // Handle new task scheduling
         const task = tasks.find((t) => t.id === active.id);
         if (task) {
             try {
@@ -105,11 +193,12 @@ export function DailyCalendar() {
     const goToToday = () => setSelectedDate(new Date());
 
     const unscheduledTasks = tasks.filter((t) => !t.calendarSlot && t.status !== 'done');
+    const hasActiveTask = activeTasks.length > 0;
 
     if (loading && events.length === 0) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-accent" />
+                <Loader2 className="w-6 h-6 animate-spin text-[#4ecdc4]" />
             </div>
         );
     }
@@ -124,14 +213,47 @@ export function DailyCalendar() {
                 variants={fadeIn}
                 initial="hidden"
                 animate="visible"
-                className="h-full flex flex-col"
+                className="h-full flex flex-col relative"
             >
+                {/* Floating Active Task Banner */}
                 <AnimatePresence>
-                    <ActiveTaskBanner />
+                    {hasActiveTask && showBanner && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="absolute top-0 left-0 right-0 z-40 p-2"
+                        >
+                            <div className="relative">
+                                <ActiveTaskBanner />
+                                <button
+                                    onClick={() => setShowBanner(false)}
+                                    className="absolute -top-1 -right-1 w-6 h-6 bg-bg-primary border border-border rounded-full flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors shadow-md"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
                 </AnimatePresence>
 
+                {/* Show banner button when hidden */}
+                {hasActiveTask && !showBanner && (
+                    <motion.button
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        onClick={() => setShowBanner(true)}
+                        className="absolute top-2 right-2 z-40 px-3 py-1.5 bg-[#4ecdc4]/10 text-[#4ecdc4] rounded-full text-xs font-medium hover:bg-[#4ecdc4]/20 transition-colors"
+                    >
+                        Task in progress
+                    </motion.button>
+                )}
+
                 {/* Date Navigation */}
-                <div className="sticky top-0 z-20 bg-bg-primary/90 backdrop-blur-lg border-b border-border">
+                <div className={cn(
+                    "sticky top-0 z-20 bg-bg-primary/90 backdrop-blur-lg border-b border-border",
+                    hasActiveTask && showBanner && "mt-20"
+                )}>
                     <div className="flex items-center justify-between p-4">
                         <Button variant="ghost" size="sm" onClick={goToPreviousDay}>
                             <ChevronLeft className="w-5 h-5" />
@@ -146,12 +268,12 @@ export function DailyCalendar() {
                                     {format(selectedDate, 'EEEE')}
                                 </span>
                                 {!isToday && (
-                                    <button onClick={goToToday} className="text-xs text-accent font-medium hover:underline">
+                                    <button onClick={goToToday} className="text-xs text-[#4ecdc4] font-medium hover:underline">
                                         Go to Today
                                     </button>
                                 )}
                                 {isToday && (
-                                    <span className="text-xs px-2 py-0.5 bg-[#06d6a0]/10 text-[#06d6a0] rounded-full font-medium">
+                                    <span className="text-xs px-2 py-0.5 bg-[#4ecdc4]/10 text-[#4ecdc4] rounded-full font-medium">
                                         Today
                                     </span>
                                 )}
@@ -165,15 +287,21 @@ export function DailyCalendar() {
                 </div>
 
                 {/* Time Grid with Overlapping Events */}
-                <div className="flex-1 overflow-auto relative pb-36 md:pb-4">
+                <div
+                    ref={scrollContainerRef}
+                    className="flex-1 overflow-auto relative pb-36 md:pb-4"
+                >
                     {/* Hour rows (background) */}
                     {hours.map((hour) => (
                         <HourRow key={hour} hour={hour} date={dateKey} activeId={activeId} />
                     ))}
 
-                    {/* Events overlaid on top */}
+                    {/* Current Time Indicator - only show today */}
+                    {isToday && <CurrentTimeIndicator startHour={startHour} />}
+
+                    {/* Events overlaid on top - now draggable */}
                     {events.map((event) => (
-                        <CalendarEvent
+                        <DraggableEvent
                             key={event.id}
                             event={event}
                             onClick={() => setEditingEvent(event)}
@@ -207,7 +335,11 @@ export function DailyCalendar() {
             </motion.div>
 
             <DragOverlay>
-                {activeId && <DragOverlayItem id={activeId} tasks={tasks} />}
+                {activeId && (
+                    dragType === 'event'
+                        ? <EventDragOverlay eventId={activeId} events={events} />
+                        : <TaskDragOverlay taskId={activeId} tasks={tasks} />
+                )}
             </DragOverlay>
 
             <EventTimeEditor
@@ -232,24 +364,52 @@ function HourRow({ hour, date, activeId }: { hour: number; date: string; activeI
             ref={setNodeRef}
             style={{ height: `${HOUR_HEIGHT}px` }}
             className={cn(
-                'border-b border-border flex items-start transition-colors',
-                isOver && 'bg-[#3a86ff]/10'
+                'border-b border-border/50 flex items-start transition-colors',
+                isOver && 'bg-[#4ecdc4]/10'
             )}
         >
             <div className="w-16 flex-shrink-0 pr-3 pt-2 text-right">
-                <span className="text-xs font-medium text-text-secondary">{formatHour(hour)}</span>
+                <span className="text-xs font-medium text-text-secondary/70">{formatHour(hour)}</span>
             </div>
 
             {isOver && activeId && (
-                <div className="flex-1 m-1 h-14 border-2 border-dashed border-[#3a86ff]/50 rounded-xl flex items-center justify-center bg-[#3a86ff]/5">
-                    <span className="text-xs font-medium text-[#3a86ff]">Drop here</span>
+                <div className="flex-1 m-1 h-14 border-2 border-dashed border-[#4ecdc4]/50 rounded-xl flex items-center justify-center bg-[#4ecdc4]/5">
+                    <span className="text-xs font-medium text-[#4ecdc4]">Drop here</span>
                 </div>
             )}
         </div>
     );
 }
 
-function DraggableTask({ task }: { task: any }) {
+// Draggable calendar event
+function DraggableEvent({ event, onClick, style }: { event: CalendarEventType; onClick: () => void; style: React.CSSProperties }) {
+    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+        id: event.id,
+        data: { type: 'event', event },
+    });
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={{ ...style, touchAction: 'none' }}
+            className={cn(
+                'absolute left-16 right-2',
+                isDragging && 'opacity-50'
+            )}
+            {...listeners}
+            {...attributes}
+        >
+            <CalendarEvent
+                event={event}
+                onClick={onClick}
+                style={{}}
+                isDraggable
+            />
+        </div>
+    );
+}
+
+function DraggableTask({ task }: { task: Task }) {
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id: task.id,
         data: { type: 'task', task },
@@ -262,9 +422,9 @@ function DraggableTask({ task }: { task: any }) {
             {...attributes}
             style={{ touchAction: 'none' }}
             className={cn(
-                'select-none px-3 py-2 bg-bg-primary border border-border rounded-xl text-sm font-medium',
+                'select-none px-3 py-2 bg-bg-primary border border-border/50 rounded-xl text-sm font-medium',
                 'cursor-grab active:cursor-grabbing transition-all',
-                'hover:border-[#3a86ff]/50 hover:shadow-md',
+                'hover:border-[#4ecdc4]/50 hover:shadow-md',
                 'flex items-center gap-2',
                 isDragging && 'opacity-50'
             )}
@@ -277,13 +437,24 @@ function DraggableTask({ task }: { task: any }) {
     );
 }
 
-function DragOverlayItem({ id, tasks }: { id: string; tasks: any[] }) {
-    const task = tasks.find((t) => t.id === id);
+function TaskDragOverlay({ taskId, tasks }: { taskId: string; tasks: Task[] }) {
+    const task = tasks.find((t) => t.id === taskId);
     if (!task) return null;
 
     return (
-        <div className="px-4 py-2.5 bg-gradient-to-r from-[#3a86ff] to-[#8338ec] text-white rounded-xl shadow-2xl text-sm font-semibold">
+        <div className="px-4 py-2.5 bg-gradient-to-r from-[#4ecdc4] to-[#a8dadc] text-white rounded-xl shadow-2xl text-sm font-semibold">
             {task.title}
+        </div>
+    );
+}
+
+function EventDragOverlay({ eventId, events }: { eventId: string; events: CalendarEventType[] }) {
+    const event = events.find((e) => e.id === eventId);
+    if (!event) return null;
+
+    return (
+        <div className="px-4 py-2.5 bg-gradient-to-r from-[#4ecdc4] to-[#a8dadc] text-white rounded-xl shadow-2xl text-sm font-semibold">
+            📅 {event.title}
         </div>
     );
 }

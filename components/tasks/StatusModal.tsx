@@ -9,6 +9,11 @@ import { useTasksStore } from '@/lib/store/optimistic';
 import { updateTaskStatus } from '@/lib/actions/tasks';
 import { cn } from '@/lib/utils/cn';
 
+// UX Color System:
+// - Start/Resume: Amber/Peach (#f4a261) - action, energy
+// - Pause: Gray - neutral, on hold
+// - Done: Green (#4ecdc4) - success, completion
+
 export function StatusModal() {
     const { isStatusModalOpen, statusModalTaskId, closeStatusModal, triggerConfetti } = useAppStore();
     const { tasks } = useTasksStore();
@@ -43,43 +48,38 @@ export function StatusModal() {
                 animate={{ opacity: 1, y: 0 }}
                 className="p-6"
             >
-                {/* Task title with subtle gradient */}
+                {/* Task title with subtle badge */}
                 <div className="text-center mb-8">
-                    <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.1 }}
-                        className="inline-flex items-center gap-2 px-3 py-1 bg-accent/10 rounded-full text-xs font-medium text-accent mb-3"
-                    >
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#4ecdc4]/10 rounded-full text-xs font-medium text-[#4ecdc4] mb-3">
                         <Sparkles className="w-3 h-3" />
                         Update Status
-                    </motion.div>
+                    </div>
                     <h3 className="text-xl font-bold text-text-primary leading-tight">
                         {task.title}
                     </h3>
                 </div>
 
-                {/* Action buttons with improved styling */}
+                {/* Action buttons */}
                 <div className="space-y-3">
                     {task.status === 'started' && (
                         <>
                             <ActionButton
                                 onClick={() => handleAction('pause')}
                                 icon={Pause}
-                                iconBg="bg-[#ffbe0b]/20"
-                                iconColor="text-[#ffbe0b]"
-                                borderColor="border-[#ffbe0b]/30 hover:border-[#ffbe0b]/60"
-                                bg="bg-[#ffbe0b]/5"
+                                iconBg="bg-bg-tertiary"
+                                iconColor="text-text-secondary"
+                                borderColor="border-border hover:border-border"
+                                bg="bg-bg-secondary/50"
                                 title="Pause Task"
                                 subtitle="Take a break, continue later"
                             />
                             <ActionButton
                                 onClick={() => handleAction('done')}
                                 icon={CheckCircle}
-                                iconBg="bg-gradient-to-br from-[#06d6a0] to-[#00b894]"
-                                iconColor="text-white"
-                                borderColor="border-[#06d6a0]/30 hover:border-[#06d6a0]/60"
-                                bg="bg-gradient-to-r from-[#06d6a0]/10 to-[#00b894]/5"
+                                iconBg="bg-[#4ecdc4]/15"
+                                iconColor="text-[#4ecdc4]"
+                                borderColor="border-[#4ecdc4]/30 hover:border-[#4ecdc4]/60"
+                                bg="bg-[#4ecdc4]/5"
                                 title="Mark as Done"
                                 subtitle="Celebrate your progress! 🎉"
                                 primary
@@ -92,10 +92,10 @@ export function StatusModal() {
                             <ActionButton
                                 onClick={() => handleAction('resume')}
                                 icon={Play}
-                                iconBg="bg-gradient-to-br from-[#06d6a0] to-[#00b894]"
-                                iconColor="text-white"
-                                borderColor="border-[#06d6a0]/30 hover:border-[#06d6a0]/60"
-                                bg="bg-gradient-to-r from-[#06d6a0]/10 to-[#00b894]/5"
+                                iconBg="bg-[#f4a261]/15"
+                                iconColor="text-[#f4a261]"
+                                borderColor="border-[#f4a261]/30 hover:border-[#f4a261]/60"
+                                bg="bg-[#f4a261]/5"
                                 title="Resume Task"
                                 subtitle="Continue where you left off"
                                 primary
@@ -105,7 +105,7 @@ export function StatusModal() {
                                 icon={CheckCircle}
                                 iconBg="bg-bg-tertiary"
                                 iconColor="text-text-secondary"
-                                borderColor="border-border hover:border-[#06d6a0]/40"
+                                borderColor="border-border hover:border-[#4ecdc4]/40"
                                 bg="bg-bg-secondary/50"
                                 title="Mark as Done"
                                 subtitle="Complete without resuming"
@@ -118,10 +118,10 @@ export function StatusModal() {
                             <ActionButton
                                 onClick={() => handleAction('resume')}
                                 icon={Play}
-                                iconBg="bg-gradient-to-br from-[#06d6a0] to-[#00b894]"
-                                iconColor="text-white"
-                                borderColor="border-[#06d6a0]/30 hover:border-[#06d6a0]/60"
-                                bg="bg-gradient-to-r from-[#06d6a0]/10 to-[#00b894]/5"
+                                iconBg="bg-[#f4a261]/15"
+                                iconColor="text-[#f4a261]"
+                                borderColor="border-[#f4a261]/30 hover:border-[#f4a261]/60"
+                                bg="bg-[#f4a261]/5"
                                 title="Start Task"
                                 subtitle="Begin working on this"
                                 primary
@@ -131,7 +131,7 @@ export function StatusModal() {
                                 icon={CheckCircle}
                                 iconBg="bg-bg-tertiary"
                                 iconColor="text-text-secondary"
-                                borderColor="border-border hover:border-[#06d6a0]/40"
+                                borderColor="border-border hover:border-[#4ecdc4]/40"
                                 bg="bg-bg-secondary/50"
                                 title="Mark as Done"
                                 subtitle="Already completed"
@@ -141,14 +141,12 @@ export function StatusModal() {
                 </div>
 
                 {/* Cancel button */}
-                <motion.button
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
+                <button
                     onClick={closeStatusModal}
-                    className="w-full mt-6 p-3 text-text-secondary hover:text-text-primary hover:bg-bg-secondary rounded-xl transition-all text-sm font-medium"
+                    className="w-full mt-6 p-3 text-text-secondary hover:text-text-primary hover:bg-bg-secondary rounded-xl transition-all duration-200 text-sm font-medium"
                 >
                     Cancel
-                </motion.button>
+                </button>
             </motion.div>
         </Modal>
     );
@@ -178,21 +176,19 @@ function ActionButton({
     primary
 }: ActionButtonProps) {
     return (
-        <motion.button
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
+        <button
             onClick={onClick}
             className={cn(
                 'w-full flex items-center gap-4 p-4 rounded-2xl',
-                'border-2 transition-all duration-300',
+                'border-2 transition-all duration-200',
+                'active:scale-[0.98]',
                 borderColor,
                 bg,
-                primary && 'shadow-lg'
+                primary && 'shadow-sm'
             )}
         >
             <div className={cn(
-                'w-12 h-12 rounded-xl flex items-center justify-center',
-                'transition-transform duration-300',
+                'w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl flex items-center justify-center',
                 iconBg
             )}>
                 <Icon className={cn('w-6 h-6', iconColor, Icon === Play && 'fill-current')} />
@@ -201,6 +197,6 @@ function ActionButton({
                 <p className="font-semibold text-text-primary">{title}</p>
                 <p className="text-sm text-text-secondary">{subtitle}</p>
             </div>
-        </motion.button>
+        </button>
     );
 }

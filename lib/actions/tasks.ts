@@ -155,9 +155,13 @@ export async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
     useTasksStore.getState().updateTask(taskId, updates);
 
     const task = useTasksStore.getState().tasks.find(t => t.id === taskId);
+
+    // Calculate calendar event status
+    const eventStatus = newStatus === 'done' ? 'completed' :
+        newStatus === 'started' ? 'active' : 'scheduled';
+
+    // Update optimistic store
     if (task?.calendarSlot?.eventId) {
-        const eventStatus = newStatus === 'done' ? 'completed' :
-            newStatus === 'started' ? 'active' : 'scheduled';
         useCalendarStore.getState().updateEvent(task.calendarSlot.eventId, {
             status: eventStatus,
         });
@@ -173,14 +177,15 @@ export async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
             firestoreUpdates.pausedAt = serverTimestamp();
         } else if (newStatus === 'done') {
             firestoreUpdates.completedAt = serverTimestamp();
-
-            if (task?.calendarSlot?.eventId) {
-                const eventRef = doc(db, 'calendar_events', task.calendarSlot.eventId);
-                await updateDoc(eventRef, { status: 'completed' });
-            }
         }
 
         await updateDoc(taskRef, firestoreUpdates);
+
+        // Sync calendar event status to Firestore for ALL status changes
+        if (task?.calendarSlot?.eventId) {
+            const eventRef = doc(db, 'calendar_events', task.calendarSlot.eventId);
+            await updateDoc(eventRef, { status: eventStatus });
+        }
     } catch (error) {
         console.error('Failed to update task status:', error);
     }

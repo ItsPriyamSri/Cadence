@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { GripVertical } from 'lucide-react';
 import { CalendarEvent as CalendarEventType } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils/cn';
 import { formatTime } from '@/lib/utils/dates';
@@ -10,27 +11,28 @@ interface CalendarEventCardProps {
     event: CalendarEventType;
     onClick: () => void;
     style?: React.CSSProperties;
+    isDraggable?: boolean;
 }
 
-// Color config based on status
+// Softer color config based on status
 const statusColors = {
     scheduled: {
-        bg: 'bg-[#3a86ff]/20',
-        border: 'border-l-[#3a86ff]',
-        text: 'text-[#3a86ff]',
-        dot: 'bg-[#3a86ff]',
+        bg: 'bg-[#5fa8d3]/15',
+        border: 'border-l-[#5fa8d3]',
+        text: 'text-[#5fa8d3]',
+        dot: 'bg-[#5fa8d3]',
     },
     active: {
-        bg: 'bg-[#ffbe0b]/20',
-        border: 'border-l-[#ffbe0b]',
-        text: 'text-[#ffbe0b]',
-        dot: 'bg-[#ffbe0b]',
+        bg: 'bg-[#f4a261]/15',
+        border: 'border-l-[#f4a261]',
+        text: 'text-[#f4a261]',
+        dot: 'bg-[#f4a261]',
     },
     completed: {
-        bg: 'bg-[#06d6a0]/20',
-        border: 'border-l-[#06d6a0]',
-        text: 'text-[#06d6a0]',
-        dot: 'bg-[#06d6a0]',
+        bg: 'bg-[#4ecdc4]/15',
+        border: 'border-l-[#4ecdc4]',
+        text: 'text-[#4ecdc4]',
+        dot: 'bg-[#4ecdc4]',
     },
 };
 
@@ -40,7 +42,7 @@ function getStatusColors(status: string) {
     return statusColors.scheduled;
 }
 
-export function CalendarEvent({ event, onClick, style }: CalendarEventCardProps) {
+export function CalendarEvent({ event, onClick, style, isDraggable }: CalendarEventCardProps) {
     const colors = getStatusColors(event.status);
 
     return (
@@ -51,15 +53,21 @@ export function CalendarEvent({ event, onClick, style }: CalendarEventCardProps)
             onClick={onClick}
             style={style}
             className={cn(
-                'absolute left-16 right-2 rounded-xl border-l-4 px-3 py-2 transition-all overflow-hidden',
-                'hover:shadow-lg cursor-pointer z-10',
+                'rounded-xl border-l-4 px-3 py-2 transition-all overflow-hidden h-full',
+                'hover:shadow-lg cursor-pointer active:scale-[0.98]',
                 colors.bg,
                 colors.border,
-                event.status === 'completed' && 'opacity-70'
+                event.status === 'completed' && 'opacity-70',
+                isDraggable && 'cursor-grab active:cursor-grabbing'
             )}
         >
-            {/* Horizontal layout: title on left, time on right */}
-            <div className="flex items-center justify-between gap-2 h-full">
+            {/* Horizontal layout: drag handle, title, time */}
+            <div className="flex items-center gap-2 h-full">
+                {/* Drag handle indicator */}
+                {isDraggable && (
+                    <GripVertical className="w-3 h-3 text-text-secondary/40 flex-shrink-0" />
+                )}
+
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                     {/* Status dot */}
                     <motion.div
@@ -89,7 +97,7 @@ export function CalendarEvent({ event, onClick, style }: CalendarEventCardProps)
 
             {/* Active indicator glow */}
             {event.status === 'active' && (
-                <div className="absolute inset-0 rounded-xl bg-[#ffbe0b]/5 animate-pulse pointer-events-none" />
+                <div className="absolute inset-0 rounded-xl bg-[#f4a261]/5 animate-pulse pointer-events-none" />
             )}
         </motion.div>
     );

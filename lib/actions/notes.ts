@@ -28,6 +28,7 @@ export async function createNote(content: string = ''): Promise<string> {
         id: tempId,
         userId,
         content,
+        priority: false,
         createdAt: now,
         updatedAt: now,
     };
@@ -42,6 +43,7 @@ export async function createNote(content: string = ''): Promise<string> {
         const noteRef = await addDoc(collection(db, 'notes'), {
             userId,
             content,
+            priority: false,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });

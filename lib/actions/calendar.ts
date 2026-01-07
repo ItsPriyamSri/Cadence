@@ -226,3 +226,58 @@ export async function unscheduleTask(taskId: string, eventId: string) {
         throw error;
     }
 }
+
+export async function rescheduleEvent(eventId: string, newDate: string, newHour: number, taskId: string | null) {
+    const startTime = `${newHour.toString().padStart(2, '0')}:00`;
+    const endTime = `${(newHour + 1).toString().padStart(2, '0')}:00`;
+
+    // Optimistic update for calendar event
+    useCalendarStore.getState().updateEvent(eventId, {
+        date: newDate,
+        startTime,
+        endTime,
+    });
+
+    // Optimistic update for linked task
+    if (taskId) {
+        useTasksStore.getState().updateTask(taskId, {
+            calendarSlot: {
+                date: newDate,
+                startTime,
+                endTime,
+                eventId,
+            },
+        });
+    }
+
+    // Haptic feedback
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([30, 20, 30]);
+    }
+
+    // Background sync
+    try {
+        const eventRef = doc(db, 'calendar_events', eventId);
+        await updateDoc(eventRef, {
+            date: newDate,
+            startTime,
+            endTime,
+        });
+
+        // Update linked task's calendar slot
+        if (taskId) {
+            const taskRef = doc(db, 'tasks', taskId);
+            await updateDoc(taskRef, {
+                calendarSlot: {
+                    date: newDate,
+                    startTime,
+                    endTime,
+                    eventId,
+                },
+            });
+        }
+    } catch (error) {
+        console.error('Failed to reschedule event:', error);
+        throw error;
+    }
+}

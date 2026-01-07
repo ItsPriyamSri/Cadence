@@ -65,6 +65,7 @@ export interface Note {
     id: string;
     userId: string;
     content: string;
+    priority: boolean;
     createdAt: Timestamp;
     updatedAt: Timestamp;
 }
@@ -106,9 +107,11 @@ export function docToCalendarEvent(doc: DocumentData): CalendarEvent {
 }
 
 export function docToNote(doc: DocumentData): Note {
+    const data = doc.data();
     return {
         id: doc.id,
-        ...doc.data(),
+        ...data,
+        priority: data.priority ?? false,
     } as Note;
 }
 
