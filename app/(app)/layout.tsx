@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { MobileNav } from '@/components/layout/MobileNav';
+import { InstallPrompt } from '@/components/ui/InstallPrompt';
 import { useUser } from '@/lib/firebase/auth';
 
 export default function AppLayout({
@@ -44,6 +45,7 @@ export default function AppLayout({
                 {children}
             </main>
             <MobileNav />
+            <InstallPrompt />
         </div>
     );
 }

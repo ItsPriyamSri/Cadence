@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Circle, Play, Pause, CheckCircle, Clock, Target, Star,
@@ -64,14 +64,30 @@ export function TaskCard({ task }: TaskCardProps) {
     const config = statusConfig[task.status];
     const Icon = config.icon;
     const { openStatusModal, openTaskForm, contextMenuTaskId, openContextMenu, closeContextMenu } = useAppStore();
-    const [showMenu, setShowMenu] = useState(false);
-    const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
 
     const isMenuOpen = contextMenuTaskId === task.id;
+
+    // Close menu on outside click/touch
+    useEffect(() => {
+        if (!isMenuOpen) return;
+        const handler = (e: MouseEvent | TouchEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                closeContextMenu();
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        document.addEventListener('touchstart', handler);
+        return () => {
+            document.removeEventListener('mousedown', handler);
+            document.removeEventListener('touchstart', handler);
+        };
+    }, [isMenuOpen, closeContextMenu]);
 
     const handleTaskClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (task.status === 'done') return;
+        if (isMenuOpen) return; // Don't cycle status if menu is open
 
         const nextStatus = getNextStatus(task.status);
         if (nextStatus) {
@@ -108,25 +124,15 @@ export function TaskCard({ task }: TaskCardProps) {
         openTaskForm(task.id);
     };
 
-    const handleTouchStart = () => {
-        longPressTimer.current = setTimeout(() => {
-            openContextMenu(task.id);
-        }, 500);
-    };
-
-    const handleTouchEnd = () => {
-        if (longPressTimer.current) {
-            clearTimeout(longPressTimer.current);
-        }
+    const handleMenuToggle = (e: React.MouseEvent | React.TouchEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        isMenuOpen ? closeContextMenu() : openContextMenu(task.id);
     };
 
     return (
         <div
             onClick={handleTaskClick}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            onMouseEnter={() => setShowMenu(true)}
-            onMouseLeave={() => { setShowMenu(false); if (isMenuOpen) closeContextMenu(); }}
             className={cn(
                 'group relative p-4 rounded-2xl cursor-pointer border',
                 'transition-all duration-200 ease-out',
@@ -144,7 +150,7 @@ export function TaskCard({ task }: TaskCardProps) {
                 <button
                     onClick={handleIconClick}
                     className={cn(
-                        'flex-shrink-0 mt-0.5 w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl',
+                        'flex-shrink-0 mt-0.5 w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl relative',
                         'flex items-center justify-center',
                         'transition-all duration-200',
                         'active:scale-95',
@@ -153,7 +159,6 @@ export function TaskCard({ task }: TaskCardProps) {
                     )}
                 >
                     <Icon className="w-5 h-5" strokeWidth={2.5} />
-                    {/* Pulse animation for started tasks */}
                     {config.pulse && (
                         <span className="absolute inset-0 rounded-xl bg-[#f4a261]/20 animate-ping" style={{ animationDuration: '2s' }} />
                     )}
@@ -172,7 +177,6 @@ export function TaskCard({ task }: TaskCardProps) {
 
                     {/* Metadata Row */}
                     <div className="flex flex-wrap items-center gap-2 mt-2">
-                        {/* Date & Time if Scheduled */}
                         {task.calendarSlot && task.calendarSlot.date && (
                             <span className="flex items-center gap-1.5 px-2 py-1 bg-[#5fa8d3]/10 text-[#5fa8d3] rounded-lg text-xs font-medium">
                                 <Clock className="w-3 h-3" />
@@ -180,7 +184,6 @@ export function TaskCard({ task }: TaskCardProps) {
                             </span>
                         )}
 
-                        {/* Goal badge */}
                         {task.goalId && (
                             <span className="flex items-center gap-1.5 px-2 py-1 bg-[#a8a4ce]/10 text-[#a8a4ce] rounded-lg text-xs font-medium">
                                 <Target className="w-3 h-3" />
@@ -190,9 +193,9 @@ export function TaskCard({ task }: TaskCardProps) {
                     </div>
                 </div>
 
-                {/* Right Side Actions */}
-                <div className="flex items-center gap-1">
-                    {/* Priority Star - only for non-completed tasks */}
+                {/* Right Side Actions - always visible */}
+                <div className="flex items-center gap-1" ref={menuRef}>
+                    {/* Priority Star */}
                     {task.status !== 'done' && (
                         <button
                             onClick={handlePriorityToggle}
@@ -207,69 +210,54 @@ export function TaskCard({ task }: TaskCardProps) {
                         </button>
                     )}
 
-                    {/* 3-Dot Menu */}
-                    <AnimatePresence>
-                        {(showMenu || isMenuOpen) && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.15 }}
-                                className="relative"
-                            >
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        isMenuOpen ? closeContextMenu() : openContextMenu(task.id);
-                                    }}
-                                    className="p-2 rounded-lg hover:bg-bg-tertiary transition-colors text-text-secondary hover:text-text-primary min-w-[40px] min-h-[40px] flex items-center justify-center"
-                                >
-                                    <MoreVertical className="w-4 h-4" />
-                                </button>
+                    {/* 3-Dot Menu - always visible */}
+                    <div className="relative">
+                        <button
+                            onClick={handleMenuToggle}
+                            onTouchEnd={handleMenuToggle}
+                            className="p-2 rounded-lg hover:bg-bg-tertiary transition-colors text-text-secondary hover:text-text-primary min-w-[40px] min-h-[40px] flex items-center justify-center"
+                        >
+                            <MoreVertical className="w-4 h-4" />
+                        </button>
 
-                                <AnimatePresence>
-                                    {isMenuOpen && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 4 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 4 }}
-                                            transition={{ duration: 0.15 }}
-                                            className="absolute right-0 top-full mt-1 w-36 bg-bg-primary border border-border/50 rounded-xl shadow-xl z-50 overflow-hidden"
-                                            onClick={(e) => e.stopPropagation()}
+                        <AnimatePresence>
+                            {isMenuOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 4 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 4 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="absolute right-0 top-full mt-1 w-40 bg-bg-primary border border-border rounded-xl shadow-2xl z-[100] overflow-hidden"
+                                >
+                                    {task.status === 'done' && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleRestore(); }}
+                                            className="w-full px-4 py-3.5 flex items-center gap-3 text-sm text-accent hover:bg-accent/10 transition-colors font-medium"
                                         >
-                                            {/* Restore option for completed tasks */}
-                                            {task.status === 'done' && (
-                                                <button
-                                                    onClick={handleRestore}
-                                                    className="w-full px-4 py-3 flex items-center gap-3 text-sm text-accent hover:bg-accent/10 transition-colors font-medium"
-                                                >
-                                                    <RotateCcw className="w-4 h-4" />
-                                                    Restore
-                                                </button>
-                                            )}
-                                            {/* Edit option for non-completed tasks */}
-                                            {task.status !== 'done' && (
-                                                <button
-                                                    onClick={handleEdit}
-                                                    className="w-full px-4 py-3 flex items-center gap-3 text-sm text-text-primary hover:bg-bg-secondary transition-colors font-medium"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                    Edit
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={handleDelete}
-                                                className="w-full px-4 py-3 flex items-center gap-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors font-medium"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                                Delete
-                                            </button>
-                                        </motion.div>
+                                            <RotateCcw className="w-4 h-4" />
+                                            Restore
+                                        </button>
                                     )}
-                                </AnimatePresence>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                                    {task.status !== 'done' && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleEdit(); }}
+                                            className="w-full px-4 py-3.5 flex items-center gap-3 text-sm text-text-primary hover:bg-bg-secondary transition-colors font-medium"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                            Edit
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                                        className="w-full px-4 py-3.5 flex items-center gap-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors font-medium"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete
+                                    </button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
             </div>
 

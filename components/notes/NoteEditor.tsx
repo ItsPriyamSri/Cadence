@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Loader2, PenLine } from 'lucide-react';
 import { NoteCard } from './NoteCard';
+import { NoteOverlay } from './NoteOverlay';
 import { useNotes } from '@/lib/hooks/useNotes';
 import { createNote } from '@/lib/actions/notes';
 import { staggerContainer, fadeIn } from '@/lib/utils/animations';
@@ -11,32 +12,41 @@ import { cn } from '@/lib/utils/cn';
 
 export function NoteEditor() {
     const { notes, loading } = useNotes();
-    const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+    const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
 
     // Sort notes: priority first, then by updatedAt
     const sortedNotes = useMemo(() => {
         return [...notes].sort((a, b) => {
-            // Priority first
             if (a.priority && !b.priority) return -1;
             if (!a.priority && b.priority) return 1;
-            // Then by updated date
             const aTime = a.updatedAt?.toMillis?.() || 0;
             const bTime = b.updatedAt?.toMillis?.() || 0;
             return bTime - aTime;
         });
     }, [notes]);
 
+    const editingNote = editingNoteId ? notes.find(n => n.id === editingNoteId) || null : null;
+
     const handleCreateNote = async () => {
         setIsCreating(true);
         try {
             const noteId = await createNote('');
-            setActiveNoteId(noteId);
+            // Immediately open in edit overlay
+            setEditingNoteId(noteId);
         } catch (error) {
             console.error('Failed to create note:', error);
         } finally {
             setIsCreating(false);
         }
+    };
+
+    const handleOpenNote = (noteId: string) => {
+        setEditingNoteId(noteId);
+    };
+
+    const handleCloseOverlay = () => {
+        setEditingNoteId(null);
     };
 
     if (loading) {
@@ -55,18 +65,15 @@ export function NoteEditor() {
 
     return (
         <div className="space-y-4">
-            {/* New Note Button - Enhanced */}
-            <motion.button
+            {/* New Note Button */}
+            <button
                 onClick={handleCreateNote}
                 disabled={isCreating}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
                 className={cn(
-                    'w-full p-5 rounded-2xl border-2 border-dashed transition-all duration-300',
+                    'w-full p-5 rounded-2xl border-2 border-dashed transition-all duration-200',
                     'border-border hover:border-[#4ecdc4] hover:bg-[#4ecdc4]/5',
                     'flex items-center justify-center gap-3 group',
+                    'active:scale-[0.99]',
                     isCreating && 'opacity-50 cursor-wait'
                 )}
             >
@@ -80,7 +87,7 @@ export function NoteEditor() {
                 <span className="text-base font-medium text-text-secondary group-hover:text-[#4ecdc4] transition-colors">
                     {isCreating ? 'Creating...' : 'Capture a Thought'}
                 </span>
-            </motion.button>
+            </button>
 
             {/* Notes List */}
             {sortedNotes.length === 0 ? (
@@ -108,13 +115,19 @@ export function NoteEditor() {
                             <NoteCard
                                 key={note.id}
                                 note={note}
-                                isActive={activeNoteId === note.id}
-                                onClick={() => setActiveNoteId(note.id)}
+                                onClick={() => handleOpenNote(note.id)}
                             />
                         ))}
                     </AnimatePresence>
                 </motion.div>
             )}
+
+            {/* Full-screen Note Overlay */}
+            <NoteOverlay
+                note={editingNote}
+                isOpen={!!editingNoteId}
+                onClose={handleCloseOverlay}
+            />
         </div>
     );
 }
