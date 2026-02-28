@@ -77,7 +77,7 @@ export function GoalModal() {
 
         try {
             if (editingGoal) {
-                await updateGoal(editingGoal.id, { title: title.trim() });
+                await updateGoal(editingGoal.id, { title: title.trim(), type });
             } else {
                 await createGoal({ title: title.trim(), type });
             }
@@ -117,14 +117,12 @@ export function GoalModal() {
                     autoFocus
                 />
 
-                {!editingGoal && (
-                    <Select
-                        label="Goal Duration"
-                        value={type}
-                        onChange={(e) => setType(e.target.value as GoalType)}
-                        options={typeOptions}
-                    />
-                )}
+                <Select
+                    label="Goal Duration"
+                    value={type}
+                    onChange={(e) => setType(e.target.value as GoalType)}
+                    options={typeOptions}
+                />
 
                 <div className="text-sm text-text-secondary">
                     {format(dateRange.start, 'MMM d')} - {format(dateRange.end, 'MMM d, yyyy')}
