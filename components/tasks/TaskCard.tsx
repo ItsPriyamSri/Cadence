@@ -32,9 +32,9 @@ const statusConfig = {
         pulse: false,
     },
     started: {
-        bg: 'bg-warning/5 dark:bg-warning/10 shadow-elevated',
-        border: 'border border-warning/20',
-        hoverBorder: 'hover:border-warning/40 hover:shadow-elevated',
+        bg: 'bg-warning/5 dark:bg-warning/10 shadow-[0_0_20px_rgba(245,158,11,0.2)] ring-2 ring-warning/50 animate-pulse-soft',
+        border: 'border border-warning/30',
+        hoverBorder: 'hover:border-warning/50 hover:shadow-elevated',
         icon: Play,
         iconColor: 'text-warning',
         iconBg: 'bg-warning/10',
@@ -163,7 +163,7 @@ export function TaskCard({ task }: TaskCardProps) {
                 >
                     <Icon className="w-5 h-5" strokeWidth={2.5} />
                     {config.pulse && (
-                        <span className="absolute inset-0 rounded-xl bg-warning/20 animate-ping" style={{ animationDuration: '2s' }} />
+                        <span className="absolute inset-0 rounded-xl bg-warning/40 animate-ping" style={{ animationDuration: '2s' }} />
                     )}
                 </button>
 

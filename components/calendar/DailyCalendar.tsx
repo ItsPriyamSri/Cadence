@@ -83,7 +83,6 @@ export function DailyCalendar() {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [dragType, setDragType] = useState<'task' | 'event' | null>(null);
     const [editingEvent, setEditingEvent] = useState<CalendarEventType | null>(null);
-    const [showBanner, setShowBanner] = useState(true);
 
     const hours = useMemo(() => generateHourSlots(0, 23), []);
     const isToday = checkIsToday(selectedDate);
@@ -215,44 +214,13 @@ export function DailyCalendar() {
                 animate="visible"
                 className="h-full flex flex-col relative"
             >
-                {/* Floating Active Task Banner */}
-                <AnimatePresence>
-                    {hasActiveTask && showBanner && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            className="absolute top-0 left-0 right-0 z-40 p-2"
-                        >
-                            <div className="relative">
-                                <ActiveTaskBanner />
-                                <button
-                                    onClick={() => setShowBanner(false)}
-                                    className="absolute -top-1 -right-1 w-6 h-6 bg-bg-primary border border-border rounded-full flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors shadow-md"
-                                >
-                                    <X className="w-3 h-3" />
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Show banner button when hidden */}
-                {hasActiveTask && !showBanner && (
-                    <motion.button
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        onClick={() => setShowBanner(true)}
-                        className="absolute top-2 right-2 z-40 px-3 py-1.5 bg-accent/10 text-accent rounded-full text-xs font-medium hover:bg-accent/20 transition-colors shadow-sm"
-                    >
-                        Task in progress
-                    </motion.button>
-                )}
+                {/* Floating Active Task Banner (Expandable Pill) */}
+                <ActiveTaskBanner />
 
                 {/* Date Navigation */}
                 <div className={cn(
-                    "sticky top-0 z-20 bg-bg-primary/90 backdrop-blur-lg border-b border-border",
-                    hasActiveTask && showBanner && "mt-20"
+                    "sticky top-0 z-20 bg-bg-primary/90 backdrop-blur-lg border-b border-border transition-all",
+                    hasActiveTask && "mt-12"
                 )}>
                     <div className="flex items-center justify-between p-4">
                         <Button variant="ghost" size="sm" onClick={goToPreviousDay}>
@@ -311,7 +279,7 @@ export function DailyCalendar() {
                 </div>
 
                 {/* Unscheduled Tasks Area - Fixed at bottom on mobile */}
-                <div className="fixed md:relative bottom-16 md:bottom-0 left-0 right-0 border-t border-border p-4 bg-bg-primary/95 md:bg-bg-secondary/50 backdrop-blur-xl z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] md:shadow-none">
+                <div className="fixed md:relative bottom-20 md:bottom-0 left-0 right-0 border-t border-border p-4 bg-bg-primary/95 md:bg-bg-secondary/50 backdrop-blur-xl z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] md:shadow-none">
                     <div className="flex items-center gap-2 mb-3">
                         <CalendarIcon className="w-4 h-4 text-text-secondary" />
                         <h3 className="text-sm font-medium text-text-secondary">Drag to schedule</h3>

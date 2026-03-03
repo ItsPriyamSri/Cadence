@@ -10,6 +10,7 @@ import { floatingBanner } from '@/lib/utils/animations';
 export function ActiveTaskBanner() {
     const { activeTasks } = useActiveTasks();
     const activeTask = activeTasks[0];
+    const [expanded, setExpanded] = useState(false);
 
     if (!activeTask) return null;
 
@@ -20,28 +21,37 @@ export function ActiveTaskBanner() {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="fixed top-14 left-0 right-0 z-40"
+                className="fixed top-16 right-4 z-50 flex justify-end"
             >
-                <div className="mx-auto max-w-7xl px-4">
-                    <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white rounded-b-2xl shadow-lg shadow-green-500/25">
-                        <div className="px-4 py-3 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
+                <div
+                    onClick={() => setExpanded(!expanded)}
+                    className="cursor-pointer bg-gradient-to-r from-warning to-amber-500 text-white shadow-elevated rounded-full flex items-center overflow-hidden transition-all duration-300"
+                >
+                    <div className="px-3 py-2 flex items-center gap-2">
+                        <motion.div
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ duration: 1, repeat: Infinity }}
+                            className="bg-white/20 p-1.5 rounded-full flex items-center justify-center backdrop-blur-sm"
+                        >
+                            <Play className="w-3.5 h-3.5 fill-current" />
+                        </motion.div>
+
+                        <ElapsedTime startTime={activeTask.startedAt} />
+
+                        <AnimatePresence initial={false}>
+                            {expanded && (
                                 <motion.div
-                                    animate={{ scale: [1, 1.2, 1] }}
-                                    transition={{ duration: 1, repeat: Infinity }}
-                                    className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm"
+                                    initial={{ width: 0, opacity: 0 }}
+                                    animate={{ width: 'auto', opacity: 1 }}
+                                    exit={{ width: 0, opacity: 0 }}
+                                    className="overflow-hidden whitespace-nowrap pl-2 border-l border-white/20 ml-2"
                                 >
-                                    <Play className="w-4 h-4 fill-current" />
-                                </motion.div>
-                                <div>
-                                    <p className="text-xs text-white/80 font-medium">Working on</p>
-                                    <p className="font-semibold truncate max-w-[200px] sm:max-w-md">
+                                    <span className="font-semibold text-sm max-w-[150px] inline-block truncate align-middle">
                                         {activeTask.title}
-                                    </p>
-                                </div>
-                            </div>
-                            <ElapsedTime startTime={activeTask.startedAt} />
-                        </div>
+                                    </span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </motion.div>
@@ -69,13 +79,8 @@ function ElapsedTime({ startTime }: { startTime: any }) {
     }, [startTime]);
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-xl backdrop-blur-sm"
-        >
-            <Clock className="w-4 h-4" />
+        <div className="flex items-center">
             <span className="font-mono font-bold text-sm">{formatElapsed(elapsed)}</span>
-        </motion.div>
+        </div>
     );
 }
