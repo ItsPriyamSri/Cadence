@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ListTodo, FileText, Calendar, User, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
@@ -30,8 +31,13 @@ export function Header() {
                     {/* 1. Left: Logo */}
                     <div className="flex-1 flex items-center justify-start">
                         <Link href="/" className="flex items-center gap-2 group">
-                            <div className="w-8 h-8 bg-gradient-to-br from-[#3a86ff] to-[#8338ec] rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
-                                <span className="text-white font-bold text-sm">C</span>
+                            <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300 overflow-hidden relative">
+                                <Image
+                                    src="/icons/icon-192x192.png"
+                                    alt="Cadence Logo"
+                                    fill
+                                    className="object-cover"
+                                />
                             </div>
                             <span className="font-semibold text-lg text-text-primary hidden sm:block tracking-tight group-hover:text-accent transition-colors">
                                 Cadence

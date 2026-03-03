@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -63,8 +64,13 @@ export default function LoginPage() {
             >
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-gradient-to-br from-accent to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-2xl">C</span>
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden relative shadow-md">
+                        <Image
+                            src="/icons/icon-192x192.png"
+                            alt="Cadence Logo"
+                            fill
+                            className="object-cover"
+                        />
                     </div>
                     <h1 className="text-xl font-semibold text-text-primary">Welcome to Cadence</h1>
                     <p className="text-sm text-text-secondary mt-1">Sign in to start your tasks</p>

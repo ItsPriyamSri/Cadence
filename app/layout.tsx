@@ -1,23 +1,54 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
+const APP_NAME = 'Cadence';
+const APP_DEFAULT_TITLE = 'Cadence - Start Your Tasks';
+const APP_TITLE_TEMPLATE = '%s - Cadence';
+const APP_DESCRIPTION = 'A process-focused productivity app that celebrates starting tasks over completing them.';
+
 export const metadata: Metadata = {
-    title: 'Cadence - Start Your Tasks',
-    description: 'A process-focused productivity app that celebrates starting tasks over completing them.',
+    applicationName: APP_NAME,
+    title: {
+        default: APP_DEFAULT_TITLE,
+        template: APP_TITLE_TEMPLATE,
+    },
+    description: APP_DESCRIPTION,
     manifest: '/manifest.json',
+    icons: {
+        icon: [
+            { url: '/icons/icon-48x48.png', sizes: '48x48', type: 'image/png' },
+            { url: '/icons/icon-96x96.png', sizes: '96x96', type: 'image/png' },
+            { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+        ],
+        apple: [
+            { url: '/icons/icon-152x152.png', sizes: '152x152', type: 'image/png' },
+            { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+        ],
+    },
     appleWebApp: {
         capable: true,
         statusBarStyle: 'default',
-        title: 'Cadence',
+        title: APP_NAME,
     },
     formatDetection: {
         telephone: false,
     },
     openGraph: {
         type: 'website',
-        siteName: 'Cadence',
-        title: 'Cadence - Start Your Tasks',
-        description: 'A process-focused productivity app that celebrates starting tasks over completing them.',
+        siteName: APP_NAME,
+        title: {
+            default: APP_DEFAULT_TITLE,
+            template: APP_TITLE_TEMPLATE,
+        },
+        description: APP_DESCRIPTION,
+    },
+    twitter: {
+        card: 'summary',
+        title: {
+            default: APP_DEFAULT_TITLE,
+            template: APP_TITLE_TEMPLATE,
+        },
+        description: APP_DESCRIPTION,
     },
 };
 
@@ -39,11 +70,6 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <head>
-                <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-                <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
-                <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
-            </head>
             <body className="antialiased">
                 {children}
             </body>

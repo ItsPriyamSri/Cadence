@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { Download, X } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
@@ -16,12 +17,7 @@ export function InstallPrompt() {
     const [dismissed, setDismissed] = useState(false);
 
     useEffect(() => {
-        // === 1. Register Service Worker (required for PWA installability) ===
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch((err) => {
-                console.warn('SW registration failed:', err);
-            });
-        }
+        // Service worker registration is handled automatically by next-pwa
 
         // === 2. Don't show on desktop ===
         const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -99,8 +95,13 @@ export function InstallPrompt() {
                 >
                     <div className="flex items-center gap-3">
                         {/* Icon */}
-                        <div className="w-11 h-11 min-w-[44px] rounded-xl bg-gradient-to-br from-[#4ecdc4] to-[#a8dadc] flex items-center justify-center shadow-md">
-                            <Download className="w-5 h-5 text-white" />
+                        <div className="w-11 h-11 min-w-[44px] rounded-xl flex items-center justify-center shadow-md overflow-hidden relative">
+                            <Image
+                                src="/icons/icon-192x192.png"
+                                alt="Cadence Logo"
+                                fill
+                                className="object-cover"
+                            />
                         </div>
 
                         {/* Text */}
