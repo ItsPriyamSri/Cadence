@@ -17,8 +17,8 @@ export function MobileNav() {
     const pathname = usePathname();
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-bg-primary/95 backdrop-blur-xl border-t border-border md:hidden safe-area-bottom">
-            <div className="flex items-center justify-around h-16 px-4">
+        <nav className="fixed bottom-4 left-4 right-4 z-50 bg-bg-primary/80 backdrop-blur-xl border border-border rounded-3xl shadow-elevated md:hidden">
+            <div className="flex items-center justify-around h-16 px-2">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = pathname === tab.href;
@@ -28,7 +28,7 @@ export function MobileNav() {
                             key={tab.href}
                             href={tab.href}
                             className={cn(
-                                'flex flex-col items-center justify-center gap-1 py-2 px-4 rounded-xl transition-colors relative',
+                                'flex flex-col items-center justify-center gap-1 py-1 px-3 rounded-2xl transition-colors relative h-12 mt-2',
                                 isActive ? 'text-accent' : 'text-text-secondary active:text-text-primary'
                             )}
                             aria-label={tab.label}
@@ -37,7 +37,7 @@ export function MobileNav() {
                             {isActive && (
                                 <motion.div
                                     layoutId="mobileActiveTab"
-                                    className="absolute inset-0 bg-accent/10 rounded-xl"
+                                    className="absolute inset-0 bg-accent-light rounded-2xl"
                                     transition={{ type: 'spring', duration: 0.3 }}
                                 />
                             )}

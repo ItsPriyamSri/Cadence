@@ -25,14 +25,14 @@ export function GoalsTile() {
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 className={cn(
-                    'w-full p-4 rounded-2xl border-2 border-border',
-                    'bg-gradient-to-r from-[#8338ec]/10 to-[#3a86ff]/10',
-                    'hover:border-[#8338ec]/30 transition-all',
+                    'w-full p-4 rounded-3xl border border-transparent shadow-soft',
+                    'bg-gradient-to-r from-accent/10 to-blue-400/10',
+                    'hover:shadow-elevated transition-all duration-300',
                     'flex items-center justify-between'
                 )}
             >
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#8338ec] to-[#3a86ff] flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-accent to-blue-500 shadow-md flex items-center justify-center">
                         <Target className="w-5 h-5 text-white" />
                     </div>
                     <div className="text-left">
@@ -65,7 +65,7 @@ export function GoalsTile() {
                                 onClick={() => openGoalModal()}
                                 whileHover={{ scale: 1.01 }}
                                 whileTap={{ scale: 0.99 }}
-                                className="w-full p-3 border-2 border-dashed border-border rounded-xl hover:border-[#8338ec]/50 hover:bg-[#8338ec]/5 transition-all flex items-center justify-center gap-2 text-text-secondary hover:text-[#8338ec]"
+                                className="w-full p-3 border-2 border-dashed border-border rounded-xl hover:border-accent/50 hover:bg-accent/5 transition-all flex items-center justify-center gap-2 text-text-secondary hover:text-accent"
                             >
                                 <Plus className="w-4 h-4" />
                                 <span className="text-sm font-medium">Add Goal</span>
@@ -80,21 +80,21 @@ export function GoalsTile() {
                                     whileHover={{ scale: 1.01 }}
                                     onClick={() => openGoalModal(goal.id)}
                                     className={cn(
-                                        'p-4 rounded-xl border border-border cursor-pointer',
-                                        'bg-bg-secondary/50 hover:bg-bg-secondary transition-all',
-                                        'hover:border-[#8338ec]/30'
+                                        'p-4 rounded-2xl border border-transparent cursor-pointer shadow-sm',
+                                        'bg-bg-tertiary hover:shadow-md transition-all duration-300',
+                                        'hover:border-accent/30'
                                     )}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <Star className="w-4 h-4 text-[#ffbe0b]" />
+                                            <Star className="w-4 h-4 text-warning" />
                                             <span className="font-medium text-text-primary">{goal.title}</span>
                                         </div>
                                         <span className={cn(
                                             'text-xs px-2 py-1 rounded-lg font-medium',
-                                            goal.type === 'weekly' && 'bg-[#3a86ff]/10 text-[#3a86ff]',
-                                            goal.type === 'monthly' && 'bg-[#8338ec]/10 text-[#8338ec]',
-                                            goal.type === 'quarterly' && 'bg-[#ff006e]/10 text-[#ff006e]'
+                                            goal.type === 'weekly' && 'bg-blue-500/10 text-blue-500',
+                                            goal.type === 'monthly' && 'bg-indigo-500/10 text-indigo-500',
+                                            goal.type === 'quarterly' && 'bg-violet-500/10 text-violet-500'
                                         )}>
                                             {goal.type.charAt(0).toUpperCase() + goal.type.slice(1)}
                                         </span>

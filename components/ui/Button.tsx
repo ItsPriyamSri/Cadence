@@ -16,17 +16,17 @@ interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-    primary: 'bg-gradient-to-r from-accent to-[#5856D6] text-white hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98]',
-    secondary: 'bg-bg-secondary text-text-primary hover:bg-bg-tertiary active:scale-[0.98]',
+    primary: 'bg-gradient-to-r from-accent to-indigo-500 text-white shadow-md hover:shadow-elevated hover:shadow-accent/30 active:scale-[0.98]',
+    secondary: 'bg-bg-secondary text-text-primary hover:bg-bg-tertiary hover:shadow-sm active:scale-[0.98]',
     ghost: 'bg-transparent text-text-primary hover:bg-bg-secondary active:bg-bg-tertiary',
-    outline: 'bg-transparent border-2 border-border text-text-primary hover:border-accent/50 hover:bg-accent/5 active:bg-accent/10',
-    danger: 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:shadow-lg hover:shadow-red-500/25 active:scale-[0.98]',
+    outline: 'bg-transparent border-2 border-border text-text-primary hover:border-accent/50 hover:bg-accent/5 active:bg-accent/10 hover:shadow-sm',
+    danger: 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-md hover:shadow-elevated hover:shadow-red-500/30 active:scale-[0.98]',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-    sm: 'px-3 py-1.5 text-xs rounded-lg gap-1.5',
-    md: 'px-4 py-2.5 text-sm rounded-xl gap-2',
-    lg: 'px-6 py-3.5 text-base rounded-2xl gap-2.5',
+    sm: 'px-3 py-1.5 text-xs rounded-xl gap-1.5',
+    md: 'px-4 py-2.5 text-sm rounded-2xl gap-2',
+    lg: 'px-6 py-3.5 text-base rounded-3xl gap-2.5',
 };
 
 export function Button({

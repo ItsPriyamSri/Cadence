@@ -198,7 +198,7 @@ export function DailyCalendar() {
     if (loading && events.length === 0) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-[#4ecdc4]" />
+                <Loader2 className="w-6 h-6 animate-spin text-accent" />
             </div>
         );
     }
@@ -243,7 +243,7 @@ export function DailyCalendar() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         onClick={() => setShowBanner(true)}
-                        className="absolute top-2 right-2 z-40 px-3 py-1.5 bg-[#4ecdc4]/10 text-[#4ecdc4] rounded-full text-xs font-medium hover:bg-[#4ecdc4]/20 transition-colors"
+                        className="absolute top-2 right-2 z-40 px-3 py-1.5 bg-accent/10 text-accent rounded-full text-xs font-medium hover:bg-accent/20 transition-colors shadow-sm"
                     >
                         Task in progress
                     </motion.button>
@@ -268,12 +268,12 @@ export function DailyCalendar() {
                                     {format(selectedDate, 'EEEE')}
                                 </span>
                                 {!isToday && (
-                                    <button onClick={goToToday} className="text-xs text-[#4ecdc4] font-medium hover:underline">
+                                    <button onClick={goToToday} className="text-xs text-accent font-medium hover:underline">
                                         Go to Today
                                     </button>
                                 )}
                                 {isToday && (
-                                    <span className="text-xs px-2 py-0.5 bg-[#4ecdc4]/10 text-[#4ecdc4] rounded-full font-medium">
+                                    <span className="text-xs px-2 py-0.5 bg-accent/10 text-accent rounded-full font-medium">
                                         Today
                                     </span>
                                 )}
@@ -365,7 +365,7 @@ function HourRow({ hour, date, activeId }: { hour: number; date: string; activeI
             style={{ height: `${HOUR_HEIGHT}px` }}
             className={cn(
                 'border-b border-border/50 flex items-start transition-colors',
-                isOver && 'bg-[#4ecdc4]/10'
+                isOver && 'bg-accent/10'
             )}
         >
             <div className="w-16 flex-shrink-0 pr-3 pt-2 text-right">
@@ -373,8 +373,8 @@ function HourRow({ hour, date, activeId }: { hour: number; date: string; activeI
             </div>
 
             {isOver && activeId && (
-                <div className="flex-1 m-1 h-14 border-2 border-dashed border-[#4ecdc4]/50 rounded-xl flex items-center justify-center bg-[#4ecdc4]/5">
-                    <span className="text-xs font-medium text-[#4ecdc4]">Drop here</span>
+                <div className="flex-1 m-1 h-14 border-2 border-dashed border-accent/50 rounded-2xl flex items-center justify-center bg-accent/5">
+                    <span className="text-xs font-medium text-accent">Drop here</span>
                 </div>
             )}
         </div>
@@ -422,9 +422,9 @@ function DraggableTask({ task }: { task: Task }) {
             {...attributes}
             style={{ touchAction: 'none' }}
             className={cn(
-                'select-none px-3 py-2 bg-bg-primary border border-border/50 rounded-xl text-sm font-medium',
+                'select-none px-3 py-2 bg-bg-tertiary border border-border/50 rounded-2xl text-sm font-medium shadow-sm',
                 'cursor-grab active:cursor-grabbing transition-all',
-                'hover:border-[#4ecdc4]/50 hover:shadow-md',
+                'hover:border-accent/50 hover:shadow-md',
                 'flex items-center gap-2',
                 isDragging && 'opacity-50'
             )}
@@ -442,7 +442,7 @@ function TaskDragOverlay({ taskId, tasks }: { taskId: string; tasks: Task[] }) {
     if (!task) return null;
 
     return (
-        <div className="px-4 py-2.5 bg-gradient-to-r from-[#4ecdc4] to-[#a8dadc] text-white rounded-xl shadow-2xl text-sm font-semibold">
+        <div className="px-4 py-2.5 bg-gradient-to-r from-accent to-blue-400 text-white rounded-2xl shadow-elevated text-sm font-semibold">
             {task.title}
         </div>
     );
@@ -453,7 +453,7 @@ function EventDragOverlay({ eventId, events }: { eventId: string; events: Calend
     if (!event) return null;
 
     return (
-        <div className="px-4 py-2.5 bg-gradient-to-r from-[#4ecdc4] to-[#a8dadc] text-white rounded-xl shadow-2xl text-sm font-semibold">
+        <div className="px-4 py-2.5 bg-gradient-to-r from-accent to-blue-400 text-white rounded-2xl shadow-elevated text-sm font-semibold">
             📅 {event.title}
         </div>
     );

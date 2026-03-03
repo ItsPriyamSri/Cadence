@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/Header';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { InstallPrompt } from '@/components/ui/InstallPrompt';
 import { useUser } from '@/lib/firebase/auth';
+import { Loader2 } from 'lucide-react';
 
 export default function AppLayout({
     children,
@@ -24,11 +25,9 @@ export default function AppLayout({
     // Loading state
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-bg-primary">
-                <div className="animate-pulse flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 bg-accent rounded-2xl" />
-                    <div className="w-24 h-4 bg-bg-secondary rounded" />
-                </div>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-bg-primary">
+                <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                <span className="mt-4 text-sm font-medium text-text-secondary animate-pulse">Loading Cadence...</span>
             </div>
         );
     }
@@ -41,7 +40,7 @@ export default function AppLayout({
     return (
         <div className="min-h-screen bg-bg-primary">
             <Header />
-            <main className="pb-20 md:pb-8">
+            <main className="pb-24 md:pb-8 pt-4">
                 {children}
             </main>
             <MobileNav />

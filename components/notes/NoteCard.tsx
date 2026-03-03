@@ -40,18 +40,15 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
             exit="exit"
             onClick={onClick}
             className={cn(
-                'group relative p-4 rounded-2xl cursor-pointer',
-                'bg-bg-secondary/30 hover:bg-bg-secondary/50',
-                'border border-border/50 hover:border-border',
-                'transition-all duration-200',
+                'group relative p-4 rounded-3xl cursor-pointer',
+                'bg-bg-tertiary shadow-soft hover:shadow-elevated',
+                'border border-transparent hover:border-border/30',
+                'transition-all duration-300',
                 'active:scale-[0.98]',
-                note.priority && 'ring-1 ring-[#4ecdc4]/40 bg-[#4ecdc4]/5'
+                note.priority && 'ring-2 ring-warning/30 bg-warning/5'
             )}
         >
-            {/* Priority indicator - top bar */}
-            {note.priority && (
-                <div className="absolute top-0 left-4 right-4 h-0.5 bg-gradient-to-r from-[#4ecdc4] to-[#a8dadc] rounded-b-full" />
-            )}
+            {/* Priority indicator - top bar (removed per request) */}
 
             {/* Preview text - read only */}
             <p className={cn(
@@ -72,13 +69,13 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
                     <button
                         onClick={handlePriorityToggle}
                         className={cn(
-                            'p-2 rounded-lg transition-all duration-200 min-w-[36px] min-h-[36px] flex items-center justify-center',
+                            'p-2 rounded-lg transition-all duration-200 min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-bg-secondary',
                             note.priority
-                                ? 'text-[#4ecdc4]'
-                                : 'text-text-secondary/30 hover:text-[#4ecdc4]/70 opacity-0 group-hover:opacity-100'
+                                ? 'text-warning'
+                                : 'text-text-secondary/30 hover:text-warning/70 opacity-0 group-hover:opacity-100'
                         )}
                     >
-                        <Star className={cn('w-4 h-4', note.priority && 'fill-current')} />
+                        <Star className={cn('w-4 h-4', note.priority && 'fill-warning')} />
                     </button>
 
                     <button

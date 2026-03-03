@@ -48,12 +48,16 @@ const config: Config = {
                 ],
             },
             boxShadow: {
-                'soft': '0 2px 8px var(--shadow)',
+                'soft': '0 4px 20px -2px var(--shadow)',
+                'elevated': '0 8px 30px -4px var(--shadow-elevated)',
                 'medium': '0 4px 16px var(--shadow)',
             },
             borderRadius: {
                 'xl': '12px',
                 '2xl': '16px',
+                '3xl': '20px',
+                '4xl': '24px',
+                'full': '9999px',
             },
             animation: {
                 'pulse-soft': 'pulse-soft 2s ease-in-out infinite',

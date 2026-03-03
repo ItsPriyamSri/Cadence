@@ -23,39 +23,39 @@ interface TaskCardProps {
 // - Done: Green - completed, success
 const statusConfig = {
     default: {
-        bg: 'bg-bg-secondary/30',
-        border: 'border-border/50',
-        hoverBorder: 'hover:border-border',
+        bg: 'bg-bg-tertiary shadow-soft',
+        border: 'border border-transparent',
+        hoverBorder: 'hover:shadow-elevated hover:border-border/30',
         icon: Circle,
-        iconColor: 'text-text-secondary/60',
-        iconBg: 'bg-bg-tertiary',
+        iconColor: 'text-text-secondary/60 hover:text-accent transition-colors',
+        iconBg: 'bg-bg-secondary',
         pulse: false,
     },
     started: {
-        bg: 'bg-[#f4a261]/8',
-        border: 'border-[#f4a261]/30',
-        hoverBorder: 'hover:border-[#f4a261]/50',
+        bg: 'bg-warning/5 dark:bg-warning/10 shadow-elevated',
+        border: 'border border-warning/20',
+        hoverBorder: 'hover:border-warning/40 hover:shadow-elevated',
         icon: Play,
-        iconColor: 'text-[#f4a261]',
-        iconBg: 'bg-[#f4a261]/15',
+        iconColor: 'text-warning',
+        iconBg: 'bg-warning/10',
         pulse: true,
     },
     paused: {
-        bg: 'bg-bg-secondary/40',
-        border: 'border-border/70',
-        hoverBorder: 'hover:border-border',
+        bg: 'bg-bg-tertiary/80 shadow-sm',
+        border: 'border border-transparent',
+        hoverBorder: 'hover:border-border/30',
         icon: Pause,
-        iconColor: 'text-text-secondary/70',
-        iconBg: 'bg-bg-tertiary',
+        iconColor: 'text-text-secondary/60',
+        iconBg: 'bg-bg-secondary',
         pulse: false,
     },
     done: {
-        bg: 'bg-[#4ecdc4]/5',
-        border: 'border-[#4ecdc4]/20',
-        hoverBorder: 'hover:border-[#4ecdc4]/40',
+        bg: 'bg-bg-secondary/20 shadow-none',
+        border: 'border border-transparent',
+        hoverBorder: 'hover:border-border/20',
         icon: CheckCircle,
-        iconColor: 'text-[#4ecdc4]',
-        iconBg: 'bg-[#4ecdc4]/10',
+        iconColor: 'text-success',
+        iconBg: 'bg-success/10',
         pulse: false,
     },
 };
@@ -137,15 +137,15 @@ export function TaskCard({ task }: TaskCardProps) {
             onMouseEnter={() => setShowDots(true)}
             onMouseLeave={() => { setShowDots(false); if (isMenuOpen) closeContextMenu(); }}
             className={cn(
-                'group relative p-4 rounded-2xl cursor-pointer border',
-                'transition-all duration-200 ease-out',
-                'hover:shadow-md',
-                'active:opacity-90',
+                'group relative p-4 rounded-3xl cursor-pointer',
+                'transition-all duration-300 ease-out',
+                'active:scale-[0.98]',
                 config.bg,
                 config.border,
                 config.hoverBorder,
                 task.status === 'done' && 'opacity-60 hover:opacity-80',
-                task.priority && 'ring-1 ring-[#4ecdc4]/40'
+                task.priority && 'ring-2 ring-warning/30',
+                isMenuOpen && 'z-50'
             )}
         >
             <div className="flex items-start gap-3">
@@ -163,7 +163,7 @@ export function TaskCard({ task }: TaskCardProps) {
                 >
                     <Icon className="w-5 h-5" strokeWidth={2.5} />
                     {config.pulse && (
-                        <span className="absolute inset-0 rounded-xl bg-[#f4a261]/20 animate-ping" style={{ animationDuration: '2s' }} />
+                        <span className="absolute inset-0 rounded-xl bg-warning/20 animate-ping" style={{ animationDuration: '2s' }} />
                     )}
                 </button>
 
@@ -188,7 +188,7 @@ export function TaskCard({ task }: TaskCardProps) {
                         )}
 
                         {task.goalId && (
-                            <span className="flex items-center gap-1.5 px-2 py-1 bg-[#a8a4ce]/10 text-[#a8a4ce] rounded-lg text-xs font-medium">
+                            <span className="flex items-center gap-1.5 px-2 py-1 bg-accent/10 text-accent rounded-lg text-xs font-medium">
                                 <Target className="w-3 h-3" />
                                 Goal
                             </span>
@@ -203,13 +203,13 @@ export function TaskCard({ task }: TaskCardProps) {
                         <button
                             onClick={handlePriorityToggle}
                             className={cn(
-                                'p-2 rounded-lg transition-all duration-200 min-w-[40px] min-h-[40px] flex items-center justify-center',
+                                'p-2 rounded-lg transition-all duration-200 min-w-[40px] min-h-[40px] flex items-center justify-center hover:bg-bg-secondary',
                                 task.priority
-                                    ? 'text-[#4ecdc4]'
-                                    : 'text-text-secondary/30 hover:text-[#4ecdc4]/70'
+                                    ? 'text-warning'
+                                    : 'text-text-secondary/30 hover:text-warning/70'
                             )}
                         >
-                            <Star className={cn('w-5 h-5', task.priority && 'fill-current')} />
+                            <Star className={cn('w-5 h-5', task.priority && 'fill-warning text-warning')} />
                         </button>
                     )}
 
@@ -270,11 +270,11 @@ export function TaskCard({ task }: TaskCardProps) {
 
             {/* Progress Bar for Started Tasks */}
             {task.status === 'started' && (
-                <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#f4a261]/20 rounded-full overflow-hidden">
+                <div className="absolute bottom-0 left-4 right-4 h-1 bg-warning/10 rounded-t-full overflow-hidden">
                     <motion.div
-                        animate={{ x: ['-100%', '100%'] }}
-                        transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
-                        className="w-1/2 h-full bg-[#f4a261]"
+                        animate={{ x: ['-100%', '250%'] }}
+                        transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                        className="w-1/2 h-full bg-gradient-to-r from-warning/0 via-warning to-warning/0 rounded-full"
                     />
                 </div>
             )}

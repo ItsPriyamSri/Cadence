@@ -7,39 +7,78 @@
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-/* Default Light Theme */
+/* Default Light Theme - Calm Electric Blue */
 :root {
   --bg-primary: #FFFFFF;
-  --bg-secondary: #F5F5F7;
-  --bg-tertiary: #FAFAFA;
-  --text-primary: #1D1D1F;
-  --text-secondary: #6E6E73;
-  --accent: #007AFF;
-  --success: #34C759;
-  --warning: #FF9500;
-  --complete: #8E8E93;
-  --border: #E5E5EA;
-  --shadow: rgba(0, 0, 0, 0.08);
+  --bg-secondary: #F8FAFC;
+  /* Softer, cooler gray */
+  --bg-tertiary: #F1F5F9;
+  --bg-gradient-start: #EEF2F6;
+  /* Light blue tint top */
+  --bg-gradient-end: #FFFFFF;
+  /* White bottom */
+
+  --text-primary: #0F172A;
+  /* Slate 900 */
+  --text-secondary: #475569;
+  /* Slate 600 */
+
+  --accent: #3B82F6;
+  /* Electric Blue */
+  --accent-light: #EFF6FF;
+  /* Very light blue for soft backgrounds */
+  --accent-glow: rgba(59, 130, 246, 0.4);
+
+  --success: #10B981;
+  /* Emerald 500 */
+  --warning: #F59E0B;
+  /* Amber 500 */
+  --complete: #94A3B8;
+  /* Slate 400 */
+
+  --border: rgba(226, 232, 240, 0.6);
+  /* Softer Slate 200 */
+  --shadow: rgba(15, 23, 42, 0.04);
+  /* Slate 900 with low opacity */
+  --shadow-elevated: rgba(15, 23, 42, 0.08);
 
   /* Gradients */
-  --gradient-accent: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
-  --gradient-success: linear-gradient(135deg, #34C759 0%, #30D158 100%);
-  --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
-  --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --gradient-accent: linear-gradient(135deg, #3B82F6 0%, #4F46E5 100%);
+  --gradient-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.5) 100%);
 }
 
-/* Standard Dark Theme */
+/* Standard Dark Theme - Deep Navy/Charcoal */
 .dark {
-  --bg-primary: #000000;
-  --bg-secondary: #1C1C1E;
-  --bg-tertiary: #2C2C2E;
-  --text-primary: #F5F5F7;
-  --text-secondary: #98989D;
-  --border: #38383A;
-  --shadow: rgba(0, 0, 0, 0.4);
+  --bg-primary: #0F111A;
+  /* Deep Navy base */
+  --bg-secondary: #171A23;
+  /* Elevated Navy */
+  --bg-tertiary: #1E222D;
+  /* Card background */
+  --bg-gradient-start: #0B0D14;
+  /* Darker navy top */
+  --bg-gradient-end: #0F111A;
+  /* Navy bottom */
 
-  --gradient-glass: linear-gradient(135deg, rgba(28, 28, 30, 0.9) 0%, rgba(28, 28, 30, 0.7) 100%);
-  --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --text-primary: #F1F5F9;
+  /* Slate 100 */
+  --text-secondary: #94A3B8;
+  /* Slate 400 */
+
+  --accent: #4F46E5;
+  /* Indigo 600 - slightly deeper for dark mode contrast */
+  --accent-light: rgba(79, 70, 229, 0.15);
+  /* Soft indigo for active backgrounds */
+  --accent-glow: rgba(79, 70, 229, 0.5);
+
+  --border: rgba(51, 65, 85, 0.5);
+  /* Slate 700 Soft */
+  --shadow: rgba(0, 0, 0, 0.3);
+  /* Stronger shadow for depth in dark mode */
+  --shadow-elevated: rgba(0, 0, 0, 0.5);
+
+  --gradient-glass: linear-gradient(135deg, rgba(23, 26, 35, 0.8) 0%, rgba(23, 26, 35, 0.5) 100%);
 }
 
 /* AMOLED Theme with Softer Colors */
@@ -134,20 +173,22 @@ body {
 }
 
 body {
-  background-color: var(--bg-primary);
+  background: linear-gradient(180deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+  background-attachment: fixed;
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* Premium focus styles */
 :focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.4);
+  box-shadow: 0 0 0 3px var(--accent-glow);
   border-radius: 8px;
 }
 
 .amoled :focus-visible {
-  box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.5);
 }
 
 /* Smooth scrolling */
@@ -186,8 +227,8 @@ html {
 
 /* Selection color */
 ::selection {
-  background-color: rgba(0, 122, 255, 0.2);
-  color: var(--text-primary);
+  background-color: var(--accent-light);
+  color: var(--accent);
 }
 
 .amoled ::selection {
@@ -197,9 +238,9 @@ html {
 /* Glassmorphism utility - polished */
 .glass {
   background: var(--gradient-glass);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--border);
 }
 
 .dark .glass,
@@ -207,18 +248,14 @@ html {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Premium card shadow - refined */
+/* Premium card shadow - refined for depth */
 .card-shadow {
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-elevated);
 }
 
 .dark .card-shadow,
 .amoled .card-shadow {
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.3),
-    0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-elevated);
 }
 
 /* Custom scrollbar class for modals/panels */

@@ -56,7 +56,7 @@ export function Modal({
                         animate="visible"
                         exit="exit"
                         onClick={onClose}
-                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        className="absolute inset-0 bg-black/60 backdrop-blur-md"
                     />
 
                     {/* Modal content */}

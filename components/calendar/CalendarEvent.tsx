@@ -14,25 +14,25 @@ interface CalendarEventCardProps {
     isDraggable?: boolean;
 }
 
-// Softer color config based on status
+// Softer color config based on semantic classes
 const statusColors = {
     scheduled: {
-        bg: 'bg-[#5fa8d3]/15',
-        border: 'border-l-[#5fa8d3]',
-        text: 'text-[#5fa8d3]',
-        dot: 'bg-[#5fa8d3]',
+        bg: 'bg-accent/15',
+        border: 'border-l-accent',
+        text: 'text-accent',
+        dot: 'bg-accent',
     },
     active: {
-        bg: 'bg-[#f4a261]/15',
-        border: 'border-l-[#f4a261]',
-        text: 'text-[#f4a261]',
-        dot: 'bg-[#f4a261]',
+        bg: 'bg-warning/15',
+        border: 'border-l-warning',
+        text: 'text-warning',
+        dot: 'bg-warning',
     },
     completed: {
-        bg: 'bg-[#4ecdc4]/15',
-        border: 'border-l-[#4ecdc4]',
-        text: 'text-[#4ecdc4]',
-        dot: 'bg-[#4ecdc4]',
+        bg: 'bg-success/15',
+        border: 'border-l-success',
+        text: 'text-success',
+        dot: 'bg-success',
     },
 };
 
@@ -53,11 +53,11 @@ export function CalendarEvent({ event, onClick, style, isDraggable }: CalendarEv
             onClick={onClick}
             style={style}
             className={cn(
-                'rounded-xl border-l-4 px-3 py-2 transition-all overflow-hidden h-full',
+                'rounded-2xl border-l-4 px-3 py-2 transition-all overflow-hidden h-full',
                 'hover:shadow-lg cursor-pointer active:scale-[0.98]',
                 colors.bg,
                 colors.border,
-                event.status === 'completed' && 'opacity-70',
+                event.status === 'completed' && 'opacity-60',
                 isDraggable && 'cursor-grab active:cursor-grabbing'
             )}
         >
@@ -97,7 +97,7 @@ export function CalendarEvent({ event, onClick, style, isDraggable }: CalendarEv
 
             {/* Active indicator glow */}
             {event.status === 'active' && (
-                <div className="absolute inset-0 rounded-xl bg-[#f4a261]/5 animate-pulse pointer-events-none" />
+                <div className="absolute inset-0 rounded-2xl bg-warning/5 animate-pulse pointer-events-none" />
             )}
         </motion.div>
     );
