@@ -10,6 +10,7 @@ interface AppState {
     // Theme
     theme: Theme;
     setTheme: (theme: Theme) => void;
+    cycleTheme: () => void;
 
     // Task filtering
     taskFilter: TaskFilter;
@@ -40,6 +41,11 @@ interface AppState {
     openContextMenu: (taskId: string) => void;
     closeContextMenu: () => void;
 
+    // Task delete confirmation
+    confirmDeleteTaskId: string | null;
+    openDeleteConfirm: (taskId: string) => void;
+    closeDeleteConfirm: () => void;
+
     // Goals expanded state on notes page
     isGoalsExpanded: boolean;
     toggleGoalsExpanded: () => void;
@@ -51,7 +57,13 @@ interface AppState {
     // Celebration state
     showConfetti: boolean;
     triggerConfetti: () => void;
+
+    // Shell -> Notes page signal to compose a new note ("Capture a Thought")
+    noteComposeNonce: number;
+    requestNoteCompose: () => void;
 }
+
+const THEME_ORDER: Theme[] = ['light', 'dark', 'amoled'];
 
 export const useAppStore = create<AppState>()(
     persist(
@@ -66,6 +78,14 @@ export const useAppStore = create<AppState>()(
                 }
                 set({ theme });
             },
+            cycleTheme: () => set((state) => {
+                const next = THEME_ORDER[(THEME_ORDER.indexOf(state.theme) + 1) % THEME_ORDER.length];
+                if (typeof document !== 'undefined') {
+                    document.documentElement.classList.remove('light', 'dark', 'amoled');
+                    document.documentElement.classList.add(next);
+                }
+                return { theme: next };
+            }),
 
             // Task filtering
             taskFilter: 'all',
@@ -116,6 +136,11 @@ export const useAppStore = create<AppState>()(
             openContextMenu: (taskId) => set({ contextMenuTaskId: taskId }),
             closeContextMenu: () => set({ contextMenuTaskId: null }),
 
+            // Task delete confirmation
+            confirmDeleteTaskId: null,
+            openDeleteConfirm: (taskId) => set({ confirmDeleteTaskId: taskId, contextMenuTaskId: null }),
+            closeDeleteConfirm: () => set({ confirmDeleteTaskId: null }),
+
             // Goals expanded
             isGoalsExpanded: false,
             toggleGoalsExpanded: () => set((state) => ({
@@ -132,6 +157,10 @@ export const useAppStore = create<AppState>()(
                 set({ showConfetti: true });
                 setTimeout(() => set({ showConfetti: false }), 3000);
             },
+
+            // Note compose signal
+            noteComposeNonce: 0,
+            requestNoteCompose: () => set((state) => ({ noteComposeNonce: state.noteComposeNonce + 1 })),
         }),
         {
             name: 'cadence-settings',

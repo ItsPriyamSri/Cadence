@@ -10,6 +10,54 @@ import {
 import { db, CalendarEvent } from '@/lib/firebase/firestore';
 import { getCurrentUserId } from '@/lib/firebase/auth';
 import { useCalendarStore, useTasksStore } from '@/lib/store/optimistic';
+import { updateTask } from '@/lib/actions/tasks';
+
+export function addHour(time: string): string {
+    const [h, m] = time.split(':').map(Number);
+    const next = (h + 1) % 24;
+    return `${next.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Reconcile a task's schedule from the task form. Reuses the existing
+ * event/slot actions so calendar <-> task sync stays identical to drag-drop.
+ * - schedule null  -> unschedule (delete event + clear slot) if one exists
+ * - existing slot  -> update the linked event's date/time (+ slot)
+ * - no slot        -> create a new event and link it
+ */
+export async function setTaskSchedule(
+    taskId: string,
+    taskTitle: string,
+    schedule: { date: string; startTime: string; endTime: string } | null,
+) {
+    const task = useTasksStore.getState().tasks.find((t) => t.id === taskId);
+    const existingEventId = task?.calendarSlot?.eventId || null;
+
+    if (!schedule) {
+        if (existingEventId) await unscheduleTask(taskId, existingEventId);
+        return;
+    }
+
+    if (existingEventId) {
+        await updateCalendarEvent(existingEventId, {
+            title: taskTitle,
+            date: schedule.date,
+            startTime: schedule.startTime,
+            endTime: schedule.endTime,
+        });
+        await updateTask(taskId, { calendarSlot: { ...schedule, eventId: existingEventId } });
+        return;
+    }
+
+    const eventId = await createCalendarEvent({
+        title: taskTitle,
+        date: schedule.date,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        taskId,
+    });
+    await updateTask(taskId, { calendarSlot: { ...schedule, eventId } });
+}
 
 interface CreateEventInput {
     title: string;

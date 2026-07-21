@@ -1,99 +1,93 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { ListTodo, FileText, Calendar, User, LogOut } from 'lucide-react';
-import { cn } from '@/lib/utils/cn';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sun, Moon, LogOut } from 'lucide-react';
 import { useUser, signOut } from '@/lib/firebase/auth';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
-
-const navLinks = [
-    { href: '/tasks', label: 'Tasks', icon: ListTodo },
-    { href: '/notes', label: 'Notes', icon: FileText },
-    { href: '/calendar', label: 'Calendar', icon: Calendar },
-];
+import { useAppStore } from '@/lib/store/app';
 
 export function Header() {
-    const pathname = usePathname();
     const { user } = useUser();
+    const { theme, cycleTheme } = useAppStore();
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
 
-    const handleSignOut = async () => {
-        await signOut();
-    };
+    const isLight = theme === 'light';
+    const initial = (user?.displayName || user?.email || '?').charAt(0).toUpperCase();
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const handler = (e: MouseEvent | TouchEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        document.addEventListener('touchstart', handler);
+        return () => {
+            document.removeEventListener('mousedown', handler);
+            document.removeEventListener('touchstart', handler);
+        };
+    }, [menuOpen]);
 
     return (
-        <header className="sticky top-0 z-40 bg-bg-primary/80 backdrop-blur-xl border-b border-border transition-all duration-300">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                <div className="flex items-center justify-between h-14 relative">
+        <header
+            className="md:hidden shrink-0 flex items-center gap-2.5 px-[18px] pb-3 glass border-b border-[var(--glass-border)] z-20"
+            style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+        >
+            <Link href="/tasks" className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-[10px] flex items-center justify-center shadow-[0_4px_12px_var(--accent-glow)] bg-[linear-gradient(140deg,var(--accent),color-mix(in_srgb,var(--accent)_55%,#7c5cff))]">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--on-accent)" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 13a8 8 0 108-9" /><path d="M12 8v4l3 2" /></svg>
+                </span>
+                <span className="text-[19px] font-bold tracking-tight text-text-primary">Cadence</span>
+            </Link>
 
-                    {/* 1. Left: Logo */}
-                    <div className="flex-1 flex items-center justify-start">
-                        <Link href="/" className="flex items-center gap-2 group">
-                            <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300 overflow-hidden relative">
-                                <Image
-                                    src="/icons/icon-192x192.png"
-                                    alt="Cadence Logo"
-                                    fill
-                                    className="object-cover"
-                                />
-                            </div>
-                            <span className="font-semibold text-lg text-text-primary hidden sm:block tracking-tight group-hover:text-accent transition-colors">
-                                Cadence
-                            </span>
-                        </Link>
-                    </div>
+            <div className="flex-1" />
 
-                    {/* 2. Center: Navigation */}
-                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                        <nav className="hidden md:flex items-center gap-1 p-1 bg-bg-secondary/50 backdrop-blur-md rounded-2xl border border-border/50 shadow-sm">
-                            {navLinks.map((link) => {
-                                const Icon = link.icon;
-                                const isActive = pathname === link.href;
+            <button
+                onClick={cycleTheme}
+                aria-label="Toggle theme"
+                className="w-10 h-10 flex items-center justify-center rounded-xl border border-border bg-bg-primary text-accent"
+            >
+                {isLight ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
 
-                                return (
-                                    <Link
-                                        key={link.href}
-                                        href={link.href}
-                                        className={cn(
-                                            'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300',
-                                            isActive
-                                                ? 'bg-bg-primary text-accent shadow-sm scale-105'
-                                                : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary/80'
-                                        )}
-                                    >
-                                        <Icon className={cn("w-4 h-4 transition-transform duration-300", isActive && "scale-110")} />
-                                        {link.label}
-                                    </Link>
-                                );
-                            })}
-                        </nav>
-                    </div>
-
-                    {/* 3. Right: Theme Toggle + User */}
-                    <div className="flex-1 flex items-center justify-end gap-3">
-                        <ThemeToggle />
-
-                        {user && (
-                            <>
-                                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-bg-secondary/50 rounded-xl border border-transparent hover:border-border transition-colors">
-                                    <User className="w-4 h-4 text-text-secondary" />
-                                    <span className="text-sm text-text-primary font-medium">
-                                        {user.displayName || user.email?.split('@')[0]}
-                                    </span>
+            <div className="relative" ref={menuRef}>
+                <button
+                    onClick={() => setMenuOpen((o) => !o)}
+                    aria-label="Account"
+                    className="w-10 h-10 shrink-0 rounded-full text-white font-bold text-[15px] bg-[linear-gradient(140deg,var(--accent),var(--secondary))]"
+                >
+                    {initial}
+                </button>
+                <AnimatePresence>
+                    {menuOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                            transition={{ duration: 0.16 }}
+                            className="absolute right-0 top-12 z-30 min-w-[220px] p-2 rounded-md bg-bg-primary border border-border shadow-elev-4"
+                        >
+                            <div className="flex items-center gap-3 p-2.5">
+                                <span className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-[linear-gradient(140deg,var(--accent),var(--secondary))]">
+                                    {initial}
+                                </span>
+                                <div className="min-w-0">
+                                    <div className="text-sm font-semibold text-text-primary truncate">
+                                        {user?.displayName || user?.email?.split('@')[0]}
+                                    </div>
+                                    <div className="text-xs text-text-tertiary truncate">{user?.email}</div>
                                 </div>
-                                <button
-                                    onClick={handleSignOut}
-                                    className="p-2 rounded-xl text-text-secondary hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                                    aria-label="Sign out"
-                                >
-                                    <LogOut className="w-5 h-5" />
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
+                            </div>
+                            <button
+                                onClick={() => { setMenuOpen(false); signOut(); }}
+                                className="w-full mt-1 flex items-center justify-center gap-2 py-3 rounded-md border border-danger bg-danger-bg text-danger text-sm font-semibold"
+                            >
+                                <LogOut className="w-4 h-4" /> Sign out
+                            </button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </header>
     );

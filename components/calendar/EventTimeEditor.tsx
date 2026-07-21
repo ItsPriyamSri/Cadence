@@ -2,9 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Calendar, CalendarOff, Trash2 } from 'lucide-react';
+import { Clock, Calendar, CalendarOff } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
 import { CalendarEvent } from '@/lib/firebase/firestore';
 import { updateCalendarEvent, unscheduleTask, deleteCalendarEvent } from '@/lib/actions/calendar';
 import { updateTask } from '@/lib/actions/tasks';
@@ -247,7 +246,7 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
                             }}
                             className={cn(
                                 'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
-                                'bg-bg-tertiary hover:bg-accent/10 text-text-secondary hover:text-accent'
+                                'bg-bg-tertiary hover:bg-accent-subtle text-text-secondary hover:text-accent'
                             )}
                         >
                             {mins < 60 ? `${mins}m` : `${mins / 60}h`}
@@ -256,13 +255,13 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
                 </div>
 
                 {/* Save Button */}
-                <Button
+                <button
                     onClick={handleSave}
-                    loading={isSaving}
-                    className="w-full"
+                    disabled={isSaving}
+                    className="w-full py-3 rounded-md bg-accent text-on-accent text-base font-semibold shadow-[0_6px_16px_var(--accent-glow)] hover:brightness-105 transition disabled:opacity-60"
                 >
-                    Save Changes
-                </Button>
+                    {isSaving ? 'Saving…' : 'Save Changes'}
+                </button>
 
                 {/* Unschedule Option - Only if linked to a task */}
                 {event.taskId && (
@@ -270,9 +269,9 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
                         onClick={handleUnschedule}
                         disabled={isUnscheduling}
                         className={cn(
-                            'w-full flex items-center justify-center gap-2 p-3 rounded-xl',
-                            'text-red-500 hover:bg-red-500/10 transition-colors',
-                            'text-sm font-medium',
+                            'w-full flex items-center justify-center gap-2 p-3 rounded-md',
+                            'text-danger hover:bg-danger-bg transition-colors',
+                            'text-sm font-semibold',
                             isUnscheduling && 'opacity-50 cursor-not-allowed'
                         )}
                     >

@@ -24,6 +24,7 @@ export type GoalType = 'weekly' | 'monthly' | 'quarterly';
 interface CreateGoalInput {
     title: string;
     type: GoalType;
+    progress?: number;
 }
 
 function generateTempId(): string {
@@ -69,7 +70,7 @@ export async function createGoal(input: CreateGoalInput): Promise<string> {
         startDate: Timestamp.fromDate(start),
         endDate: Timestamp.fromDate(end),
         createdAt: now,
-        progress: 0,
+        progress: input.progress ?? 0,
     };
 
     useGoalsStore.getState().addGoal(optimisticGoal);
@@ -88,7 +89,7 @@ export async function createGoal(input: CreateGoalInput): Promise<string> {
             startDate: Timestamp.fromDate(start),
             endDate: Timestamp.fromDate(end),
             createdAt: serverTimestamp(),
-            progress: 0,
+            progress: input.progress ?? 0,
         });
 
         useGoalsStore.getState().updateGoal(tempId, { id: goalRef.id } as any);
@@ -109,6 +110,7 @@ export async function updateGoal(goalId: string, updates: Partial<Goal>) {
         await updateDoc(goalRef, updates);
     } catch (error) {
         console.error('Failed to update goal:', error);
+        throw error;
     }
 }
 

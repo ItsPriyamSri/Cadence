@@ -2,117 +2,95 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Target, Plus, Calendar, Star } from 'lucide-react';
+import { ChevronDown, Target, Plus } from 'lucide-react';
 import { useAppStore } from '@/lib/store/app';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { cn } from '@/lib/utils/cn';
 import { format } from 'date-fns';
 
+const typeBadge: Record<string, string> = {
+    weekly: 'bg-accent-subtle text-accent',
+    monthly: 'bg-priority-bg text-priority',
+    quarterly: 'bg-started-bg text-started',
+};
+
 export function GoalsTile() {
     const { isGoalsExpanded, toggleGoalsExpanded, openGoalModal } = useAppStore();
     const { goals, loading } = useGoals();
 
-    const activeGoals = goals.filter(g => {
+    const activeGoals = goals.filter((g) => {
         const endDate = g.endDate?.toDate?.() || new Date(g.endDate as any);
         return endDate >= new Date();
     });
 
     return (
-        <div className="mb-6">
-            {/* Collapsed Tile */}
-            <motion.button
+        <div className="rounded-lg overflow-hidden border border-border shadow-elev-1">
+            <button
                 onClick={toggleGoalsExpanded}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                className={cn(
-                    'w-full p-4 rounded-3xl border border-transparent shadow-soft',
-                    'bg-gradient-to-r from-accent/10 to-blue-400/10',
-                    'hover:shadow-elevated transition-all duration-300',
-                    'flex items-center justify-between'
-                )}
+                className="flex items-center gap-3 w-full p-4 text-left text-white bg-[linear-gradient(120deg,color-mix(in_srgb,var(--accent)_88%,#7c5cff),var(--secondary))]"
             >
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-accent to-blue-500 shadow-md flex items-center justify-center">
-                        <Target className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="text-left">
-                        <p className="font-semibold text-text-primary">Goals</p>
-                        <p className="text-xs text-text-secondary">
-                            {loading ? 'Loading...' : `${activeGoals.length} active goal${activeGoals.length !== 1 ? 's' : ''}`}
-                        </p>
+                <span className="w-[38px] h-[38px] shrink-0 flex items-center justify-center rounded-xl bg-white/20">
+                    <Target className="w-5 h-5" />
+                </span>
+                <div className="flex-1">
+                    <div className="text-base font-bold tracking-tight">Goals</div>
+                    <div className="text-sm opacity-90">
+                        {loading ? 'Loading…' : `${activeGoals.length} active goal${activeGoals.length !== 1 ? 's' : ''}`}
                     </div>
                 </div>
-                <motion.div
-                    animate={{ rotate: isGoalsExpanded ? 90 : 0 }}
-                    transition={{ duration: 0.2 }}
-                >
-                    <ChevronRight className="w-5 h-5 text-text-secondary" />
-                </motion.div>
-            </motion.button>
+                <motion.span animate={{ rotate: isGoalsExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                    <ChevronDown className="w-5 h-5" strokeWidth={2.2} />
+                </motion.span>
+            </button>
 
-            {/* Expanded Goals Section */}
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
                 {isGoalsExpanded && (
                     <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden bg-bg-primary"
                     >
-                        <div className="pt-4 space-y-3">
-                            {/* Add Goal Button */}
-                            <motion.button
-                                onClick={() => openGoalModal()}
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                                className="w-full p-3 border-2 border-dashed border-border rounded-xl hover:border-accent/50 hover:bg-accent/5 transition-all flex items-center justify-center gap-2 text-text-secondary hover:text-accent"
-                            >
-                                <Plus className="w-4 h-4" />
-                                <span className="text-sm font-medium">Add Goal</span>
-                            </motion.button>
-
-                            {/* Goals List */}
-                            {activeGoals.map((goal) => (
-                                <motion.div
-                                    key={goal.id}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    whileHover={{ scale: 1.01 }}
-                                    onClick={() => openGoalModal(goal.id)}
-                                    className={cn(
-                                        'p-4 rounded-2xl border border-transparent cursor-pointer shadow-sm',
-                                        'bg-bg-tertiary hover:shadow-md transition-all duration-300',
-                                        'hover:border-accent/30'
-                                    )}
-                                >
-                                    <div className="flex items-center justify-between">
+                        <div className="p-3 flex flex-col gap-2.5">
+                            {activeGoals.map((goal) => {
+                                const pct = Math.round(goal.progress ?? 0);
+                                return (
+                                    <button
+                                        key={goal.id}
+                                        onClick={() => openGoalModal(goal.id)}
+                                        className="flex flex-col gap-2 w-full p-3.5 rounded-md border border-border bg-bg-secondary text-left hover:bg-bg-tertiary transition-colors"
+                                    >
                                         <div className="flex items-center gap-2">
-                                            <Star className="w-4 h-4 text-warning" />
-                                            <span className="font-medium text-text-primary">{goal.title}</span>
+                                            <span className="text-base font-semibold text-text-primary">{goal.title}</span>
+                                            <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-md', typeBadge[goal.type])}>
+                                                {goal.type.charAt(0).toUpperCase() + goal.type.slice(1)}
+                                            </span>
+                                            <span className="ml-auto text-xs text-text-tertiary">
+                                                {goal.endDate?.toDate ? format(goal.endDate.toDate(), 'MMM d') : ''}
+                                            </span>
                                         </div>
-                                        <span className={cn(
-                                            'text-xs px-2 py-1 rounded-lg font-medium',
-                                            goal.type === 'weekly' && 'bg-blue-500/10 text-blue-500',
-                                            goal.type === 'monthly' && 'bg-indigo-500/10 text-indigo-500',
-                                            goal.type === 'quarterly' && 'bg-violet-500/10 text-violet-500'
-                                        )}>
-                                            {goal.type.charAt(0).toUpperCase() + goal.type.slice(1)}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-2 text-xs text-text-secondary">
-                                        <Calendar className="w-3 h-3" />
-                                        <span>
-                                            Ends {format(goal.endDate.toDate(), 'MMM d, yyyy')}
-                                        </span>
-                                    </div>
-                                </motion.div>
-                            ))}
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="flex-1 h-[7px] rounded-full bg-bg-tertiary overflow-hidden">
+                                                <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${pct}%` }} />
+                                            </div>
+                                            <span className="text-xs font-bold text-text-secondary tabular-nums">{pct}%</span>
+                                        </div>
+                                    </button>
+                                );
+                            })}
 
                             {activeGoals.length === 0 && !loading && (
-                                <p className="text-center text-sm text-text-secondary py-4">
+                                <p className="text-center text-sm text-text-tertiary py-2">
                                     No active goals. Create one to stay focused!
                                 </p>
                             )}
+
+                            <button
+                                onClick={() => openGoalModal()}
+                                className="flex items-center justify-center gap-2 w-full p-3 rounded-md border-[1.5px] border-dashed border-border-strong bg-transparent text-accent text-sm font-semibold hover:bg-accent-subtle transition-colors"
+                            >
+                                <Plus className="w-4 h-4" strokeWidth={2.4} /> Add Goal
+                            </button>
                         </div>
                     </motion.div>
                 )}

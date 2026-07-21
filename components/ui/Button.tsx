@@ -16,17 +16,17 @@ interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-    primary: 'bg-gradient-to-r from-accent to-indigo-500 text-white shadow-md hover:shadow-elevated hover:shadow-accent/30 active:scale-[0.98]',
-    secondary: 'bg-bg-secondary text-text-primary hover:bg-bg-tertiary hover:shadow-sm active:scale-[0.98]',
+    primary: 'bg-accent text-on-accent shadow-[0_6px_16px_var(--accent-glow)] hover:brightness-105 active:scale-[0.98]',
+    secondary: 'bg-bg-secondary text-text-primary hover:bg-bg-tertiary active:scale-[0.98]',
     ghost: 'bg-transparent text-text-primary hover:bg-bg-secondary active:bg-bg-tertiary',
-    outline: 'bg-transparent border-2 border-border text-text-primary hover:border-accent/50 hover:bg-accent/5 active:bg-accent/10 hover:shadow-sm',
-    danger: 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-md hover:shadow-elevated hover:shadow-red-500/30 active:scale-[0.98]',
+    outline: 'bg-bg-primary border-[1.5px] border-border text-text-primary hover:bg-bg-secondary',
+    danger: 'bg-danger-bg border-[1.5px] border-danger text-danger hover:brightness-105 active:scale-[0.98]',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-    sm: 'px-3 py-1.5 text-xs rounded-xl gap-1.5',
-    md: 'px-4 py-2.5 text-sm rounded-2xl gap-2',
-    lg: 'px-6 py-3.5 text-base rounded-3xl gap-2.5',
+    sm: 'px-3 py-2 text-sm rounded-md gap-1.5',
+    md: 'px-4 py-2.5 text-base rounded-md gap-2',
+    lg: 'px-6 py-3 text-base rounded-md gap-2.5',
 };
 
 export function Button({
@@ -46,8 +46,8 @@ export function Button({
             className={cn(
                 'inline-flex items-center justify-center font-semibold',
                 'transition-all duration-200',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary',
-                'disabled:opacity-50 disabled:pointer-events-none disabled:grayscale',
+                'focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--accent-glow)]',
+                'disabled:opacity-50 disabled:pointer-events-none',
                 variantStyles[variant],
                 sizeStyles[size],
                 loading && 'cursor-wait',

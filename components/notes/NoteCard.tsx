@@ -2,90 +2,41 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Star, Trash2 } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { Note } from '@/lib/firebase/firestore';
-import { updateNote, deleteNote } from '@/lib/actions/notes';
 import { cn } from '@/lib/utils/cn';
-import { formatTimeAgo } from '@/lib/utils/dates';
-import { listItem } from '@/lib/utils/animations';
+import { noteTitle, notePreview } from '@/lib/utils/notes';
 
 interface NoteCardProps {
     note: Note;
     onClick: () => void;
+    selected?: boolean;
 }
 
-export function NoteCard({ note, onClick }: NoteCardProps) {
-    const handlePriorityToggle = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        await updateNote(note.id, { priority: !note.priority });
-    };
-
-    const handleDelete = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        await deleteNote(note.id);
-    };
-
-    // Get preview text (first 120 chars, no newlines)
-    const preview = note.content
-        ? note.content.replace(/\n/g, ' ').slice(0, 120) + (note.content.length > 120 ? '...' : '')
-        : 'Empty note';
-
+export function NoteCard({ note, onClick, selected }: NoteCardProps) {
     return (
-        <motion.div
+        <motion.button
             layout
             layoutId={note.id}
-            variants={listItem}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97 }}
             onClick={onClick}
             className={cn(
-                'group relative p-4 rounded-3xl cursor-pointer',
-                'bg-bg-tertiary shadow-soft hover:shadow-elevated',
-                'border border-transparent hover:border-border/30',
-                'transition-all duration-300',
-                'active:scale-[0.98]',
-                note.priority && 'ring-2 ring-warning/30 bg-warning/5'
+                'group flex flex-col gap-1.5 w-full p-4 rounded-lg text-left transition-shadow',
+                'bg-bg-primary border shadow-elev-1 hover:shadow-elev-2',
+                selected ? 'border-accent' : 'border-border'
             )}
         >
-            {/* Priority indicator - top bar (removed per request) */}
-
-            {/* Preview text - read only */}
-            <p className={cn(
-                'text-sm text-text-primary leading-relaxed line-clamp-3',
-                !note.content && 'text-text-secondary/50 italic'
-            )}>
-                {preview}
-            </p>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between mt-3">
-                <span className="text-xs text-text-secondary/60">
-                    {note.updatedAt ? formatTimeAgo(note.updatedAt.toDate()) : 'Just now'}
+            <div className="flex items-start gap-2">
+                <span className="flex-1 text-base font-semibold leading-snug text-text-primary line-clamp-1">
+                    {noteTitle(note)}
                 </span>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1">
-                    <button
-                        onClick={handlePriorityToggle}
-                        className={cn(
-                            'p-2 rounded-lg transition-all duration-200 min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-bg-secondary',
-                            note.priority
-                                ? 'text-warning'
-                                : 'text-text-secondary/30 hover:text-warning/70 opacity-0 group-hover:opacity-100'
-                        )}
-                    >
-                        <Star className={cn('w-4 h-4', note.priority && 'fill-warning')} />
-                    </button>
-
-                    <button
-                        onClick={handleDelete}
-                        className="p-2 rounded-lg text-text-secondary/30 hover:text-red-500 hover:bg-red-500/10 transition-all duration-200 opacity-0 group-hover:opacity-100 min-w-[36px] min-h-[36px] flex items-center justify-center"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
-                </div>
+                {note.priority && <Star className="w-4 h-4 text-priority shrink-0 mt-0.5" fill="currentColor" strokeWidth={1.6} />}
             </div>
-        </motion.div>
+            <p className="text-sm leading-normal text-text-secondary line-clamp-2">
+                {notePreview(note)}
+            </p>
+        </motion.button>
     );
 }

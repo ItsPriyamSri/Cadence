@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Star, Trash2 } from 'lucide-react';
+import { ChevronLeft, Star, Trash2 } from 'lucide-react';
 import { Note } from '@/lib/firebase/firestore';
 import { updateNote, deleteNote } from '@/lib/actions/notes';
+import { useNoteDraft } from './useNoteDraft';
 import { cn } from '@/lib/utils/cn';
-import { formatTimeAgo } from '@/lib/utils/dates';
 
 interface NoteOverlayProps {
     note: Note | null;
@@ -14,188 +14,66 @@ interface NoteOverlayProps {
     onClose: () => void;
 }
 
-function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: number) {
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    const debouncedFn = useCallback(
-        (...args: Parameters<T>) => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            timeoutRef.current = setTimeout(() => callback(...args), delay);
-        },
-        [callback, delay]
-    );
-
-    useEffect(() => {
-        return () => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        };
-    }, []);
-
-    return debouncedFn;
-}
-
 export function NoteOverlay({ note, isOpen, onClose }: NoteOverlayProps) {
-    const [content, setContent] = useState('');
-    const [isSaving, setIsSaving] = useState(false);
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const { title, body, saving, error, onTitle, onBody } = useNoteDraft(note);
 
-    // Sync content when note changes
     useEffect(() => {
-        if (note) {
-            setContent(note.content);
-        }
-    }, [note]);
-
-    // Auto-focus textarea when opened
-    useEffect(() => {
-        if (isOpen && textareaRef.current) {
-            setTimeout(() => {
-                textareaRef.current?.focus();
-                // Move cursor to end
-                const len = textareaRef.current?.value.length || 0;
-                textareaRef.current?.setSelectionRange(len, len);
-            }, 200);
-        }
+        if (isOpen) document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
-
-    // Lock body scroll when open
-    useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden';
-        }
-        return () => {
-            document.body.style.overflow = '';
-        };
-    }, [isOpen]);
-
-    const saveNote = useCallback(async (noteId: string, newContent: string) => {
-        setIsSaving(true);
-        try {
-            await updateNote(noteId, { content: newContent });
-        } catch (error) {
-            console.error('Failed to save note:', error);
-        } finally {
-            setIsSaving(false);
-        }
-    }, []);
-
-    const debouncedSave = useDebounce(saveNote, 800);
-
-    const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const newContent = e.target.value;
-        setContent(newContent);
-        if (note) {
-            debouncedSave(note.id, newContent);
-        }
-    };
-
-    const handlePriorityToggle = async () => {
-        if (!note) return;
-        await updateNote(note.id, { priority: !note.priority });
-    };
-
-    const handleDelete = async () => {
-        if (!note) return;
-        await deleteNote(note.id);
-        onClose();
-    };
-
-    if (!note) return null;
 
     return (
         <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex flex-col">
-                    {/* Backdrop */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        onClick={onClose}
-                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                    />
-
-                    {/* Overlay Content */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 30 }}
-                        transition={{ duration: 0.25, ease: 'easeOut' }}
-                        className={cn(
-                            'relative z-10 flex flex-col',
-                            'w-full h-full md:h-auto md:max-h-[80vh]',
-                            'md:w-full md:max-w-xl md:mx-auto md:my-auto md:mt-[10vh]',
-                            'bg-bg-primary md:rounded-2xl md:shadow-2xl md:border md:border-border/50',
-                            'overflow-hidden'
-                        )}
+            {isOpen && note && (
+                <motion.div
+                    initial={{ y: '100%' }}
+                    animate={{ y: 0 }}
+                    exit={{ y: '100%' }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    className="fixed inset-0 z-50 flex flex-col bg-bg-primary"
+                >
+                    <div
+                        className="shrink-0 flex items-center gap-2 px-3.5 pb-3 border-b border-border"
+                        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
                     >
-                        {/* Toolbar */}
-                        <div className="flex items-center justify-between p-4 border-b border-border/50 flex-shrink-0">
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={onClose}
-                                    className="p-2 rounded-lg hover:bg-bg-secondary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
-                                >
-                                    <X className="w-5 h-5 text-text-secondary" />
-                                </button>
-                                <div className="flex items-center gap-2">
-                                    {isSaving ? (
-                                        <span className="text-xs text-[#4ecdc4] animate-pulse font-medium">Saving...</span>
-                                    ) : (
-                                        <span className="text-xs text-text-secondary/60">
-                                            {note.updatedAt ? formatTimeAgo(note.updatedAt.toDate()) : 'Just now'}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-1">
-                                {/* Star */}
-                                <button
-                                    onClick={handlePriorityToggle}
-                                    className={cn(
-                                        'p-2 rounded-lg transition-all duration-200 min-w-[40px] min-h-[40px] flex items-center justify-center',
-                                        note.priority
-                                            ? 'text-[#4ecdc4]'
-                                            : 'text-text-secondary/40 hover:text-[#4ecdc4]/70'
-                                    )}
-                                >
-                                    <Star className={cn('w-5 h-5', note.priority && 'fill-current')} />
-                                </button>
-
-                                {/* Delete */}
-                                <button
-                                    onClick={handleDelete}
-                                    className="p-2 rounded-lg text-text-secondary/40 hover:text-red-500 hover:bg-red-500/10 transition-all duration-200 min-w-[40px] min-h-[40px] flex items-center justify-center"
-                                >
-                                    <Trash2 className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Priority indicator */}
-                        {note.priority && (
-                            <div className="h-0.5 bg-gradient-to-r from-[#4ecdc4] to-[#a8dadc] flex-shrink-0" />
-                        )}
-
-                        {/* Editor */}
-                        <div className="flex-1 overflow-auto p-4 md:p-6">
-                            <textarea
-                                ref={textareaRef}
-                                value={content}
-                                onChange={handleContentChange}
-                                placeholder="What's on your mind?"
-                                className={cn(
-                                    'w-full h-full min-h-[60vh] md:min-h-[40vh] bg-transparent resize-none',
-                                    'focus:outline-none focus:ring-0 focus:shadow-none',
-                                    'text-base md:text-lg text-text-primary placeholder:text-text-secondary/40',
-                                    'leading-relaxed'
-                                )}
-                            />
-                        </div>
-                    </motion.div>
-                </div>
+                        <button onClick={onClose} className="flex items-center gap-1 py-2 pr-2 text-accent text-base font-semibold">
+                            <ChevronLeft className="w-[22px] h-[22px]" strokeWidth={2.2} /> Notes
+                        </button>
+                        <span className={cn('flex items-center gap-1.5 text-xs font-semibold', error ? 'text-danger' : 'text-text-tertiary')}>
+                            <span className={cn('w-2 h-2 rounded-full', error ? 'bg-danger' : saving ? 'bg-accent animate-pulse' : 'bg-done')} />
+                            {error ? 'Save failed' : saving ? 'Saving…' : 'Saved'}
+                        </span>
+                        <div className="flex-1" />
+                        <button
+                            onClick={() => updateNote(note.id, { priority: !note.priority })}
+                            aria-label="Toggle priority"
+                            className={cn('w-10 h-10 flex items-center justify-center rounded-xl', note.priority ? 'text-priority' : 'text-text-tertiary')}
+                        >
+                            <Star className="w-5 h-5" fill={note.priority ? 'currentColor' : 'none'} strokeWidth={1.8} />
+                        </button>
+                        <button
+                            onClick={() => { deleteNote(note.id); onClose(); }}
+                            aria-label="Delete note"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl text-text-tertiary hover:text-danger"
+                        >
+                            <Trash2 className="w-[19px] h-[19px]" />
+                        </button>
+                    </div>
+                    <input
+                        value={title}
+                        onChange={(e) => onTitle(e.target.value)}
+                        placeholder="Note title"
+                        className="border-none bg-transparent px-[18px] pt-[18px] pb-1.5 text-[23px] font-bold tracking-tight text-text-primary outline-none"
+                    />
+                    <textarea
+                        autoFocus
+                        value={body}
+                        onChange={(e) => onBody(e.target.value)}
+                        placeholder="Start writing…"
+                        className="flex-1 border-none bg-transparent px-[18px] pt-1.5 text-base leading-relaxed text-text-primary outline-none resize-none"
+                        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 18px)' }}
+                    />
+                </motion.div>
             )}
         </AnimatePresence>
     );

@@ -7,154 +7,183 @@
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-/* Default Light Theme - Calm Electric Blue */
+/* =====================================================================
+   DESIGN TOKENS  (Cadence UI Overhaul)
+   Applied via a class on <html>: .light / .dark / .amoled
+   (:root defaults to light so SSR/first paint is sane.)
+   Back-compat aliases (success, warning, complete, shadow, accent-light)
+   are kept so components migrate incrementally.
+   ===================================================================== */
+
+/* Theme-agnostic scale tokens */
 :root {
-  --bg-primary: #FFFFFF;
-  --bg-secondary: #F8FAFC;
-  /* Softer, cooler gray */
-  --bg-tertiary: #F1F5F9;
-  --bg-gradient-start: #EEF2F6;
-  /* Light blue tint top */
-  --bg-gradient-end: #FFFFFF;
-  /* White bottom */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 26px;
 
-  --text-primary: #0F172A;
-  /* Slate 900 */
-  --text-secondary: #475569;
-  /* Slate 600 */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 150ms;
+  --dur: 250ms;
+  --dur-slow: 350ms;
 
-  --accent: #3B82F6;
-  /* Electric Blue */
-  --accent-light: #EFF6FF;
-  /* Very light blue for soft backgrounds */
-  --accent-glow: rgba(59, 130, 246, 0.4);
-
-  --success: #10B981;
-  /* Emerald 500 */
-  --warning: #F59E0B;
-  /* Amber 500 */
-  --complete: #94A3B8;
-  /* Slate 400 */
-
-  --border: rgba(226, 232, 240, 0.6);
-  /* Softer Slate 200 */
-  --shadow: rgba(15, 23, 42, 0.04);
-  /* Slate 900 with low opacity */
-  --shadow-elevated: rgba(15, 23, 42, 0.08);
-
-  /* Gradients */
-  --gradient-accent: linear-gradient(135deg, #3B82F6 0%, #4F46E5 100%);
-  --gradient-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.5) 100%);
+  --glass-blur: 22px;
+  --glass-sat: 1.7;
 }
 
-/* Standard Dark Theme - Deep Navy/Charcoal */
+/* -------- LIGHT (default) -------- */
+:root,
+.light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f5f9;
+  --bg-tertiary: #e9edf4;
+  --app-bg: linear-gradient(178deg, #fbfcfe 0%, #f1f4fa 55%, #eef2f9 100%);
+
+  --text-primary: #0d1524;
+  --text-secondary: #54607a;
+  --text-tertiary: #98a1b5;
+
+  --accent: #3b5bdb;
+  --accent-hover: #2f49b8;
+  --accent-subtle: #edf0fe;
+  --accent-glow: rgba(59, 91, 219, .30);
+  --on-accent: #ffffff;
+
+  --started: #d97a06;
+  --started-bg: #fdf1df;
+  --paused: #7d8aa3;
+  --paused-bg: #eef1f6;
+  --done: #0f9d6b;
+  --done-bg: #e6f7f0;
+  --danger: #dc2626;
+  --danger-bg: #fdecec;
+  --priority: #e0a411;
+  --priority-bg: #fbf3dc;
+  --secondary: #e8734f;
+
+  --border: rgba(13, 21, 36, .08);
+  --border-strong: rgba(13, 21, 36, .14);
+
+  --elev-1: 0 1px 2px rgba(16, 24, 40, .05), 0 1px 3px rgba(16, 24, 40, .06);
+  --elev-2: 0 6px 16px rgba(16, 24, 40, .09), 0 2px 5px rgba(16, 24, 40, .05);
+  --elev-3: 0 12px 34px rgba(16, 24, 40, .14), 0 3px 8px rgba(16, 24, 40, .06);
+  --elev-4: 0 28px 64px rgba(16, 24, 40, .24), 0 8px 18px rgba(16, 24, 40, .10);
+
+  --glass-bg: rgba(255, 255, 255, .72);
+  --glass-border: rgba(13, 21, 36, .07);
+
+  /* Back-compat aliases */
+  --success: var(--done);
+  --warning: var(--started);
+  --complete: var(--paused);
+  --accent-light: var(--accent-subtle);
+  --shadow: rgba(15, 23, 42, .04);
+  --shadow-elevated: var(--elev-2);
+  --gradient-accent: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 55%, #7c5cff) 100%);
+  --gradient-success: linear-gradient(135deg, var(--done) 0%, color-mix(in srgb, var(--done) 70%, #000) 100%);
+  --gradient-glass: linear-gradient(135deg, var(--glass-bg) 0%, var(--glass-bg) 100%);
+}
+
+/* -------- DARK (deep navy) -------- */
 .dark {
-  --bg-primary: #0F111A;
-  /* Deep Navy base */
-  --bg-secondary: #171A23;
-  /* Elevated Navy */
-  --bg-tertiary: #1E222D;
-  /* Card background */
-  --bg-gradient-start: #0B0D14;
-  /* Darker navy top */
-  --bg-gradient-end: #0F111A;
-  /* Navy bottom */
+  --bg-primary: #171e30;
+  --bg-secondary: #1e2740;
+  --bg-tertiary: #27324f;
+  --app-bg: radial-gradient(1100px 700px at 80% -10%, #1c2544 0%, #0d1120 58%), linear-gradient(180deg, #101733, #0a0e1b);
 
-  --text-primary: #F1F5F9;
-  /* Slate 100 */
-  --text-secondary: #94A3B8;
-  /* Slate 400 */
+  --text-primary: #eef1f8;
+  --text-secondary: #a4adc4;
+  --text-tertiary: #6d7793;
 
-  --accent: #4F46E5;
-  /* Indigo 600 - slightly deeper for dark mode contrast */
-  --accent-light: rgba(79, 70, 229, 0.15);
-  /* Soft indigo for active backgrounds */
-  --accent-glow: rgba(79, 70, 229, 0.5);
+  --accent: #7a8dff;
+  --accent-hover: #95a4ff;
+  --accent-subtle: rgba(122, 141, 255, .16);
+  --accent-glow: rgba(122, 141, 255, .45);
+  --on-accent: #0b0f1c;
 
-  --border: rgba(51, 65, 85, 0.5);
-  /* Slate 700 Soft */
-  --shadow: rgba(0, 0, 0, 0.3);
-  /* Stronger shadow for depth in dark mode */
-  --shadow-elevated: rgba(0, 0, 0, 0.5);
+  --started: #fbbf24;
+  --started-bg: rgba(251, 191, 36, .15);
+  --paused: #7c88a3;
+  --paused-bg: rgba(124, 136, 163, .16);
+  --done: #34d399;
+  --done-bg: rgba(52, 211, 153, .15);
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, .15);
+  --priority: #f5c451;
+  --priority-bg: rgba(245, 196, 81, .15);
+  --secondary: #ff9e7d;
 
-  --gradient-glass: linear-gradient(135deg, rgba(23, 26, 35, 0.8) 0%, rgba(23, 26, 35, 0.5) 100%);
+  --border: rgba(255, 255, 255, .08);
+  --border-strong: rgba(255, 255, 255, .15);
+
+  --elev-1: 0 1px 2px rgba(0, 0, 0, .4), 0 0 0 1px rgba(255, 255, 255, .02);
+  --elev-2: 0 8px 22px rgba(0, 0, 0, .5);
+  --elev-3: 0 14px 38px rgba(0, 0, 0, .6);
+  --elev-4: 0 34px 74px rgba(0, 0, 0, .72);
+
+  --glass-bg: rgba(22, 29, 48, .66);
+  --glass-border: rgba(255, 255, 255, .09);
+
+  --success: var(--done);
+  --warning: var(--started);
+  --complete: var(--paused);
+  --accent-light: var(--accent-subtle);
+  --shadow: rgba(0, 0, 0, .3);
+  --shadow-elevated: var(--elev-2);
+  --gradient-accent: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 55%, #7c5cff) 100%);
+  --gradient-success: linear-gradient(135deg, var(--done) 0%, color-mix(in srgb, var(--done) 70%, #000) 100%);
+  --gradient-glass: linear-gradient(135deg, var(--glass-bg) 0%, var(--glass-bg) 100%);
 }
 
-/* AMOLED Theme with Softer Colors */
+/* -------- AMOLED (true black) -------- */
 .amoled {
-  --bg-primary: #000000;
-  --bg-secondary: #0a0a0a;
-  --bg-tertiary: #121212;
-  --text-primary: #FFFFFF;
-  --text-secondary: #888888;
-  --border: #1a1a1a;
-  --shadow: rgba(0, 0, 0, 0.6);
+  --bg-primary: #0b0d0f;
+  --bg-secondary: #121517;
+  --bg-tertiary: #191d20;
+  --app-bg: radial-gradient(900px 600px at 82% -12%, rgba(78, 205, 196, .10), transparent 60%), #000000;
 
-  /* Softer accent colors */
+  --text-primary: #f1f5f5;
+  --text-secondary: #9aa6a6;
+  --text-tertiary: #606e6e;
+
   --accent: #4ecdc4;
-  /* Seafoam/Cyan */
-  --success: #4ecdc4;
-  /* Seafoam */
-  --warning: #f4a261;
-  /* Peach/Coral */
-  --complete: #666666;
+  --accent-hover: #63d8cf;
+  --accent-subtle: rgba(78, 205, 196, .14);
+  --accent-glow: rgba(78, 205, 196, .42);
+  --on-accent: #00201d;
 
-  /* Soft color palette */
-  --seafoam: #4ecdc4;
-  --cyan: #5fa8d3;
-  --peach: #f4a261;
-  --coral: #e9c46a;
-  --magenta: #d4a5a5;
-  --violet: #a8a4ce;
-  --mint: #a8dadc;
+  --started: #f5b23e;
+  --started-bg: rgba(245, 178, 62, .15);
+  --paused: #5c6b6a;
+  --paused-bg: rgba(120, 138, 137, .14);
+  --done: #2fe0a6;
+  --done-bg: rgba(47, 224, 166, .14);
+  --danger: #ff6b6b;
+  --danger-bg: rgba(255, 107, 107, .14);
+  --priority: #f5c451;
+  --priority-bg: rgba(245, 196, 81, .14);
+  --secondary: #ff9e7d;
 
-  --gradient-accent: linear-gradient(135deg, #4ecdc4 0%, #a8dadc 100%);
-  --gradient-success: linear-gradient(135deg, #4ecdc4 0%, #5fa8d3 100%);
-  --gradient-glass: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(10, 10, 10, 0.8) 100%);
-  --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.8), 0 2px 4px -1px rgba(0, 0, 0, 0.5);
-}
+  --border: rgba(255, 255, 255, .08);
+  --border-strong: rgba(255, 255, 255, .16);
 
-/* AMOLED specific overrides for softer feel */
-.amoled .text-accent {
-  color: #4ecdc4;
-}
+  --elev-1: 0 0 0 1px rgba(255, 255, 255, .05);
+  --elev-2: 0 10px 26px rgba(0, 0, 0, .8), 0 0 0 1px rgba(255, 255, 255, .05);
+  --elev-3: 0 16px 42px rgba(0, 0, 0, .86), 0 0 0 1px rgba(255, 255, 255, .06);
+  --elev-4: 0 38px 80px rgba(0, 0, 0, .92), 0 0 0 1px rgba(255, 255, 255, .07);
 
-.amoled .bg-accent {
-  background-color: #4ecdc4;
-}
+  --glass-bg: rgba(10, 13, 14, .7);
+  --glass-border: rgba(255, 255, 255, .09);
 
-.amoled .border-accent {
-  border-color: #4ecdc4;
-}
-
-.amoled .text-success {
-  color: #4ecdc4;
-}
-
-.amoled .bg-success {
-  background-color: #4ecdc4;
-}
-
-.amoled .text-warning {
-  color: #f4a261;
-}
-
-.amoled .bg-warning {
-  background-color: #f4a261;
-}
-
-/* Started task in AMOLED - soft peach glow */
-.amoled .task-started {
-  background: linear-gradient(135deg, rgba(244, 162, 97, 0.15) 0%, rgba(233, 196, 106, 0.1) 100%);
-  border-color: #f4a261;
-  box-shadow: 0 0 20px rgba(244, 162, 97, 0.2);
-}
-
-/* Paused task in AMOLED - soft violet */
-.amoled .task-paused {
-  background: linear-gradient(135deg, rgba(168, 164, 206, 0.15) 0%, rgba(212, 165, 165, 0.1) 100%);
-  border-color: #a8a4ce;
+  --success: var(--done);
+  --warning: var(--started);
+  --complete: var(--paused);
+  --accent-light: var(--accent-subtle);
+  --shadow: rgba(0, 0, 0, .6);
+  --shadow-elevated: var(--elev-2);
+  --gradient-accent: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 55%, #a8dadc) 100%);
+  --gradient-success: linear-gradient(135deg, var(--done) 0%, color-mix(in srgb, var(--done) 70%, #000) 100%);
+  --gradient-glass: linear-gradient(135deg, var(--glass-bg) 0%, var(--glass-bg) 100%);
 }
 
 * {
@@ -173,7 +202,7 @@ body {
 }
 
 body {
-  background: linear-gradient(180deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+  background: var(--app-bg);
   background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
@@ -187,19 +216,14 @@ body {
   border-radius: 8px;
 }
 
-.amoled :focus-visible {
-  box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.5);
-}
-
-/* Smooth scrolling */
 html {
   scroll-behavior: smooth;
 }
 
 /* Premium scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -207,178 +231,102 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: var(--border-strong);
   border-radius: 99px;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
-}
-
-/* Hide scrollbar in AMOLED for cleaner look */
-.amoled ::-webkit-scrollbar {
-  width: 4px;
-}
-
-.amoled ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--text-tertiary);
 }
 
 /* Selection color */
 ::selection {
-  background-color: var(--accent-light);
+  background-color: var(--accent-subtle);
   color: var(--accent);
 }
 
-.amoled ::selection {
-  background-color: rgba(58, 134, 255, 0.3);
+/* Hide scrollbar utility (filter bars, trays) */
+.scrollbar-hide::-webkit-scrollbar,
+.cad-hidescroll::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide,
+.cad-hidescroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Glassmorphism utility - polished */
+/* Glass utility — floating chrome only (nav, header, sidebar, pills) */
 .glass {
-  background: var(--gradient-glass);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border: 1px solid var(--glass-border);
 }
 
-.dark .glass,
-.amoled .glass {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
+/* Elevation utilities */
+.elev-1 { box-shadow: var(--elev-1); }
+.elev-2 { box-shadow: var(--elev-2); }
+.elev-3 { box-shadow: var(--elev-3); }
+.elev-4 { box-shadow: var(--elev-4); }
+.card-shadow { box-shadow: var(--elev-2); }
 
-/* Premium card shadow - refined for depth */
-.card-shadow {
-  box-shadow: var(--shadow-elevated);
-}
-
-.dark .card-shadow,
-.amoled .card-shadow {
-  box-shadow: var(--shadow-elevated);
-}
-
-/* Custom scrollbar class for modals/panels */
+/* Custom scrollbar for modals/panels */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+  background: var(--border-strong);
+  border-radius: 6px;
 }
 
-/* AMOLED glow effects */
-.amoled .glow-accent {
-  box-shadow: 0 0 20px rgba(58, 134, 255, 0.3);
-}
+/* ===================== KEYFRAMES ===================== */
+@keyframes cad-spin { to { transform: rotate(360deg); } }
+@keyframes cad-fadeup { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes cad-pop { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: none; } }
+@keyframes cad-sheet { from { transform: translateY(101%); } to { transform: none; } }
+@keyframes cad-scrim { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cad-shimmer { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
+@keyframes cad-glow { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes cad-live { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.82); } }
 
-.amoled .glow-success {
-  box-shadow: 0 0 20px rgba(6, 214, 160, 0.3);
-}
-
-.amoled .glow-warning {
-  box-shadow: 0 0 20px rgba(255, 190, 11, 0.3);
-}
-
-.amoled .glow-pink {
-  box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
-}
-
-.amoled .glow-violet {
-  box-shadow: 0 0 20px rgba(131, 56, 236, 0.3);
-}
-
-/* Shimmer loading animation */
+/* Shimmer loading (kept for existing skeletons) */
 .shimmer {
-  background: linear-gradient(90deg,
-      var(--bg-secondary) 0%,
-      var(--bg-tertiary) 50%,
-      var(--bg-secondary) 100%);
+  background: linear-gradient(90deg, var(--bg-secondary) 0%, var(--bg-tertiary) 50%, var(--bg-secondary) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
 }
-
 @keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-
-  100% {
-    background-position: -200% 0;
-  }
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
-/* Pulse animation for active tasks */
+/* Started-task pulse ring (kept, retargeted to --started) */
 .pulse-active {
   animation: pulse-active 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
-
 @keyframes pulse-active {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4);
-  }
-
-  50% {
-    box-shadow: 0 0 0 8px rgba(52, 199, 89, 0);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 var(--started-bg); }
+  50% { box-shadow: 0 0 0 8px transparent; }
 }
 
-.amoled .pulse-active {
-  animation: pulse-active-amoled 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse-active-amoled {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(6, 214, 160, 0.5);
-  }
-
-  50% {
-    box-shadow: 0 0 0 10px rgba(6, 214, 160, 0);
-  }
-}
-
-/* Fade in animation */
+/* Fade in (kept) */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+.animate-fadeIn { animation: fadeIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-/* Celebration confetti keyframes */
+/* Celebration confetti (kept) */
 @keyframes confetti-fall {
-  0% {
-    transform: translateY(-100vh) rotate(0deg);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateY(100vh) rotate(720deg);
-    opacity: 0;
-  }
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
 }
-
-.confetti-piece {
-  animation: confetti-fall 3s ease-out forwards;
-}
+.confetti-piece { animation: confetti-fall 3s ease-out forwards; }
 
 /* Gradient text */
 .gradient-text {
@@ -388,17 +336,28 @@ html {
   background-clip: text;
 }
 
-/* Priority star golden glow */
+/* Priority star glow */
 .priority-star {
-  color: #ffbe0b;
-  filter: drop-shadow(0 0 4px rgba(255, 190, 11, 0.5));
+  color: var(--priority);
+  filter: drop-shadow(0 0 4px var(--priority-bg));
 }
 
 /* Mobile touch optimizations */
 @media (hover: none) and (pointer: coarse) {
-
   button,
   a {
     -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }

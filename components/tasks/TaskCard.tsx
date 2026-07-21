@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Circle, Play, Pause, CheckCircle, Clock, Target, Star,
-    MoreVertical, Trash2, RotateCcw, Pencil
+    Circle, Play, Pause, Check, Clock, Target, Star,
+    MoreVertical, Trash2, RotateCcw, Pencil,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { Task } from '@/lib/firebase/firestore';
-import { updateTaskStatus, getNextStatus, updateTask, deleteTask } from '@/lib/actions/tasks';
+import { updateTaskStatus, getNextStatus, updateTask } from '@/lib/actions/tasks';
 import { useAppStore } from '@/lib/store/app';
 import { formatShortDate, formatTime } from '@/lib/utils/dates';
 
@@ -16,66 +16,26 @@ interface TaskCardProps {
     task: Task;
 }
 
-// UX Color System:
-// - Default (new): Gray - neutral, waiting state
-// - Started (ongoing): Yellow/Amber - active, in progress
-// - Paused: Light Gray - on hold
-// - Done: Green - completed, success
 const statusConfig = {
-    default: {
-        bg: 'bg-bg-tertiary shadow-soft',
-        border: 'border border-transparent',
-        hoverBorder: 'hover:shadow-elevated hover:border-border/30',
-        icon: Circle,
-        iconColor: 'text-text-secondary/60 hover:text-accent transition-colors',
-        iconBg: 'bg-bg-secondary',
-        pulse: false,
-    },
-    started: {
-        bg: 'bg-warning/5 dark:bg-warning/10 shadow-[0_0_20px_rgba(245,158,11,0.2)] ring-2 ring-warning/50 animate-pulse-soft',
-        border: 'border border-warning/30',
-        hoverBorder: 'hover:border-warning/50 hover:shadow-elevated',
-        icon: Play,
-        iconColor: 'text-warning',
-        iconBg: 'bg-warning/10',
-        pulse: true,
-    },
-    paused: {
-        bg: 'bg-bg-tertiary/80 shadow-sm',
-        border: 'border border-transparent',
-        hoverBorder: 'hover:border-border/30',
-        icon: Pause,
-        iconColor: 'text-text-secondary/60',
-        iconBg: 'bg-bg-secondary',
-        pulse: false,
-    },
-    done: {
-        bg: 'bg-bg-secondary/20 shadow-none',
-        border: 'border border-transparent',
-        hoverBorder: 'hover:border-border/20',
-        icon: CheckCircle,
-        iconColor: 'text-success',
-        iconBg: 'bg-success/10',
-        pulse: false,
-    },
-};
+    default: { stripe: 'var(--border-strong)', iconBg: 'bg-bg-secondary', iconColor: 'text-text-tertiary', Icon: Circle },
+    started: { stripe: 'var(--started)', iconBg: 'bg-started-bg', iconColor: 'text-started', Icon: Play },
+    paused: { stripe: 'var(--paused)', iconBg: 'bg-paused-bg', iconColor: 'text-paused', Icon: Pause },
+    done: { stripe: 'var(--done)', iconBg: 'bg-done-bg', iconColor: 'text-done', Icon: Check },
+} as const;
 
 export function TaskCard({ task }: TaskCardProps) {
     const config = statusConfig[task.status];
-    const Icon = config.icon;
-    const { openStatusModal, openTaskForm, contextMenuTaskId, openContextMenu, closeContextMenu } = useAppStore();
+    const Icon = config.Icon;
+    const { openStatusModal, openTaskForm, contextMenuTaskId, openContextMenu, closeContextMenu, openDeleteConfirm } = useAppStore();
     const menuRef = useRef<HTMLDivElement>(null);
-    const [showDots, setShowDots] = useState(false);
-
     const isMenuOpen = contextMenuTaskId === task.id;
+    const isDone = task.status === 'done';
+    const isStarted = task.status === 'started';
 
-    // Close menu on outside click/touch
     useEffect(() => {
         if (!isMenuOpen) return;
         const handler = (e: MouseEvent | TouchEvent) => {
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-                closeContextMenu();
-            }
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) closeContextMenu();
         };
         document.addEventListener('mousedown', handler);
         document.addEventListener('touchstart', handler);
@@ -85,44 +45,22 @@ export function TaskCard({ task }: TaskCardProps) {
         };
     }, [isMenuOpen, closeContextMenu]);
 
-    const handleTaskClick = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (task.status === 'done') return;
-        if (isMenuOpen) return; // Don't cycle status if menu is open
-
-        const nextStatus = getNextStatus(task.status);
-        if (nextStatus) {
-            if (nextStatus === 'done') {
-                openStatusModal(task.id);
-            } else {
-                await updateTaskStatus(task.id, nextStatus);
-            }
-        }
+    const handleCardClick = async () => {
+        if (isDone || isMenuOpen) return;
+        const next = getNextStatus(task.status);
+        if (!next) return;
+        if (next === 'done') openStatusModal(task.id);
+        else await updateTaskStatus(task.id, next);
     };
 
-    const handleIconClick = async (e: React.MouseEvent) => {
+    const handleIconClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         openStatusModal(task.id);
     };
 
-    const handlePriorityToggle = async (e: React.MouseEvent) => {
+    const handleStar = async (e: React.MouseEvent) => {
         e.stopPropagation();
         await updateTask(task.id, { priority: !task.priority });
-    };
-
-    const handleDelete = async () => {
-        closeContextMenu();
-        await deleteTask(task.id);
-    };
-
-    const handleRestore = async () => {
-        closeContextMenu();
-        await updateTaskStatus(task.id, 'default');
-    };
-
-    const handleEdit = () => {
-        closeContextMenu();
-        openTaskForm(task.id);
     };
 
     const handleMenuToggle = (e: React.MouseEvent | React.TouchEvent) => {
@@ -131,153 +69,140 @@ export function TaskCard({ task }: TaskCardProps) {
         isMenuOpen ? closeContextMenu() : openContextMenu(task.id);
     };
 
+    const handleEdit = () => { closeContextMenu(); openTaskForm(task.id); };
+    const handleDelete = () => { openDeleteConfirm(task.id); };
+    const handleRestore = () => { closeContextMenu(); updateTaskStatus(task.id, 'default'); };
+
+    const hasChips = !!(task.calendarSlot?.date || task.goalId);
+
     return (
-        <div
-            onClick={handleTaskClick}
-            onMouseEnter={() => setShowDots(true)}
-            onMouseLeave={() => { setShowDots(false); if (isMenuOpen) closeContextMenu(); }}
+        <motion.div
+            layout
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97 }}
+            onClick={handleCardClick}
             className={cn(
-                'group relative p-4 rounded-3xl cursor-pointer',
-                'transition-all duration-300 ease-out',
-                'active:scale-[0.98]',
-                config.bg,
-                config.border,
-                config.hoverBorder,
-                task.status === 'done' && 'opacity-60 hover:opacity-80',
-                task.priority && 'ring-2 ring-warning/30',
-                isMenuOpen && 'z-50'
+                'group relative flex items-start gap-3 p-4 pl-5 rounded-lg cursor-pointer',
+                'bg-bg-primary border border-border shadow-elev-1',
+                'transition-shadow duration-200 hover:shadow-elev-2',
+                isStarted && 'ring-1 ring-[color-mix(in_srgb,var(--started)_45%,transparent)]',
+                isDone && 'opacity-60',
+                task.priority && !isDone && 'ring-1 ring-[color-mix(in_srgb,var(--priority)_50%,transparent)]',
+                isMenuOpen && 'z-20'
             )}
         >
-            <div className="flex items-start gap-3">
-                {/* Status Icon Button */}
-                <button
-                    onClick={handleIconClick}
-                    className={cn(
-                        'flex-shrink-0 mt-0.5 w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl relative',
-                        'flex items-center justify-center',
-                        'transition-all duration-200',
-                        'active:scale-95',
-                        config.iconBg,
-                        config.iconColor
-                    )}
-                >
-                    <Icon className="w-5 h-5" strokeWidth={2.5} />
-                    {config.pulse && (
-                        <span className="absolute inset-0 rounded-xl bg-warning/40 animate-ping" style={{ animationDuration: '2s' }} />
-                    )}
-                </button>
+            {/* Status stripe */}
+            <span
+                className="absolute left-0 top-3 bottom-3 w-1 rounded-full"
+                style={{ background: config.stripe }}
+            />
 
-                {/* Task Content */}
-                <div className="flex-1 min-w-0 pt-0.5">
-                    <h3
-                        className={cn(
-                            'text-base font-semibold text-text-primary leading-tight',
-                            task.status === 'done' && 'line-through text-text-secondary'
-                        )}
-                    >
-                        {task.title}
-                    </h3>
+            {/* Status icon button */}
+            <button
+                onClick={handleIconClick}
+                aria-label="Change status"
+                className={cn(
+                    'relative shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-transform active:scale-95',
+                    config.iconBg, config.iconColor
+                )}
+            >
+                {isStarted && (
+                    <span
+                        className="absolute inset-0 rounded-full animate-cad-glow"
+                        style={{ boxShadow: '0 0 0 3px var(--started-bg), 0 0 14px var(--started)' }}
+                    />
+                )}
+                <Icon className="relative w-5 h-5" strokeWidth={isDone || isStarted ? 2.6 : 2} fill={isStarted ? 'currentColor' : 'none'} />
+            </button>
 
-                    {/* Metadata Row */}
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                        {task.calendarSlot && task.calendarSlot.date && (
-                            <span className="flex items-center gap-1.5 px-2 py-1 bg-[#5fa8d3]/10 text-[#5fa8d3] rounded-lg text-xs font-medium">
+            {/* Content */}
+            <div className="flex-1 min-w-0 pt-1">
+                <div className={cn(
+                    'text-base font-semibold leading-snug text-text-primary',
+                    isDone && 'line-through text-text-secondary'
+                )}>
+                    {task.title}
+                </div>
+
+                {hasChips && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                        {task.calendarSlot?.date && (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-bg-secondary text-text-secondary text-xs font-medium">
                                 <Clock className="w-3 h-3" />
-                                {formatShortDate(new Date(task.calendarSlot.date + 'T00:00:00'))} • {formatTime(task.calendarSlot.startTime)}
+                                {formatShortDate(new Date(task.calendarSlot.date + 'T00:00:00'))} · {formatTime(task.calendarSlot.startTime)}
                             </span>
                         )}
-
                         {task.goalId && (
-                            <span className="flex items-center gap-1.5 px-2 py-1 bg-accent/10 text-accent rounded-lg text-xs font-medium">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent-subtle text-accent text-xs font-medium">
                                 <Target className="w-3 h-3" />
                                 Goal
                             </span>
                         )}
                     </div>
-                </div>
+                )}
 
-                {/* Right Side Actions - always visible */}
-                <div className="flex items-center gap-1" ref={menuRef}>
-                    {/* Priority Star */}
-                    {task.status !== 'done' && (
-                        <button
-                            onClick={handlePriorityToggle}
-                            className={cn(
-                                'p-2 rounded-lg transition-all duration-200 min-w-[40px] min-h-[40px] flex items-center justify-center hover:bg-bg-secondary',
-                                task.priority
-                                    ? 'text-warning'
-                                    : 'text-text-secondary/30 hover:text-warning/70'
-                            )}
-                        >
-                            <Star className={cn('w-5 h-5', task.priority && 'fill-warning text-warning')} />
-                        </button>
-                    )}
-
-                    {/* 3-Dot Menu - visible on hover or when menu is open */}
-                    <div className="relative">
-                        {(showDots || isMenuOpen) && (
-                            <>
-                                <button
-                                    onClick={handleMenuToggle}
-                                    onTouchEnd={handleMenuToggle}
-                                    className="p-2 rounded-lg hover:bg-bg-tertiary transition-colors text-text-secondary hover:text-text-primary min-w-[40px] min-h-[40px] flex items-center justify-center"
-                                >
-                                    <MoreVertical className="w-4 h-4" />
-                                </button>
-
-                                <AnimatePresence>
-                                    {isMenuOpen && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 4 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 4 }}
-                                            transition={{ duration: 0.15 }}
-                                            className="absolute right-0 top-full mt-1 w-40 bg-bg-primary border border-border rounded-xl shadow-2xl z-[100] overflow-hidden"
-                                        >
-                                            {task.status === 'done' && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleRestore(); }}
-                                                    className="w-full px-4 py-3.5 flex items-center gap-3 text-sm text-accent hover:bg-accent/10 transition-colors font-medium"
-                                                >
-                                                    <RotateCcw className="w-4 h-4" />
-                                                    Restore
-                                                </button>
-                                            )}
-                                            {task.status !== 'done' && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleEdit(); }}
-                                                    className="w-full px-4 py-3.5 flex items-center gap-3 text-sm text-text-primary hover:bg-bg-secondary transition-colors font-medium"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                    Edit
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                                                className="w-full px-4 py-3.5 flex items-center gap-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors font-medium"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                                Delete
-                                            </button>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </>
-                        )}
+                {isStarted && (
+                    <div className="relative h-[3px] mt-2.5 rounded-full bg-started-bg overflow-hidden">
+                        <span className="absolute inset-y-0 w-2/5 rounded-full animate-cad-shimmer bg-[linear-gradient(90deg,transparent,var(--started),transparent)]" />
                     </div>
-                </div>
+                )}
             </div>
 
-            {/* Progress Bar for Started Tasks */}
-            {task.status === 'started' && (
-                <div className="absolute bottom-0 left-4 right-4 h-1 bg-warning/10 rounded-t-full overflow-hidden">
-                    <motion.div
-                        animate={{ x: ['-100%', '250%'] }}
-                        transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-                        className="w-1/2 h-full bg-gradient-to-r from-warning/0 via-warning to-warning/0 rounded-full"
-                    />
-                </div>
+            {/* Actions */}
+            {!isDone && (
+                <button
+                    onClick={handleStar}
+                    aria-label="Toggle priority"
+                    className={cn(
+                        'shrink-0 w-9 h-9 flex items-center justify-center rounded-lg transition-colors hover:bg-bg-secondary',
+                        task.priority ? 'text-priority' : 'text-text-tertiary hover:text-priority'
+                    )}
+                >
+                    <Star className="w-[19px] h-[19px]" fill={task.priority ? 'currentColor' : 'none'} strokeWidth={1.8} />
+                </button>
             )}
-        </div>
+
+            <div className="relative shrink-0" ref={menuRef}>
+                <button
+                    onClick={handleMenuToggle}
+                    onTouchEnd={handleMenuToggle}
+                    aria-label="More actions"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-colors"
+                >
+                    <MoreVertical className="w-[19px] h-[19px]" />
+                </button>
+
+                <AnimatePresence>
+                    {isMenuOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 4 }}
+                            transition={{ duration: 0.16 }}
+                            className="absolute right-0 top-11 z-30 min-w-[158px] p-1.5 rounded-md bg-bg-primary border border-border shadow-elev-4"
+                        >
+                            {isDone ? (
+                                <MenuItem onClick={handleRestore} icon={<RotateCcw className="w-4 h-4" />} label="Restore" className="text-accent hover:bg-accent-subtle" />
+                            ) : (
+                                <MenuItem onClick={handleEdit} icon={<Pencil className="w-4 h-4" />} label="Edit" className="text-text-primary hover:bg-bg-secondary" />
+                            )}
+                            <MenuItem onClick={handleDelete} icon={<Trash2 className="w-4 h-4" />} label="Delete" className="text-danger hover:bg-danger-bg" />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </motion.div>
+    );
+}
+
+function MenuItem({ onClick, icon, label, className }: { onClick: () => void; icon: React.ReactNode; label: string; className?: string }) {
+    return (
+        <button
+            onClick={(e) => { e.stopPropagation(); onClick(); }}
+            className={cn('w-full flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-semibold transition-colors', className)}
+        >
+            {icon}{label}
+        </button>
     );
 }

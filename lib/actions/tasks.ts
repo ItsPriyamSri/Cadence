@@ -18,6 +18,7 @@ export type TaskStatus = 'default' | 'started' | 'paused' | 'done';
 interface CreateTaskInput {
     title: string;
     goalId?: string | null;
+    priority?: boolean;
 }
 
 function generateTempId(): string {
@@ -44,7 +45,7 @@ export async function createTask(input: CreateTaskInput): Promise<string> {
         goalId: input.goalId || null,
         calendarSlot: null,
         order,
-        priority: false,
+        priority: input.priority ?? false,
     };
 
     useTasksStore.getState().addTask(optimisticTask);
@@ -65,7 +66,7 @@ export async function createTask(input: CreateTaskInput): Promise<string> {
             goalId: input.goalId || null,
             calendarSlot: null,
             order,
-            priority: false,
+            priority: input.priority ?? false,
         });
 
         useTasksStore.getState().updateTask(tempId, { id: taskRef.id } as any);

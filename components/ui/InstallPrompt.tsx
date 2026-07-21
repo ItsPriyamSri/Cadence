@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
-import { Download, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -87,45 +86,31 @@ export function InstallPrompt() {
                     exit={{ opacity: 0, y: 20 }}
                     transition={{ duration: 0.3 }}
                     className={cn(
-                        'fixed bottom-20 left-3 right-3 z-50',
-                        'bg-bg-primary border border-border rounded-2xl',
-                        'shadow-2xl p-4',
-                        'lg:hidden' // Hide on large screens
+                        'fixed left-3 right-3 z-50 lg:hidden',
+                        'flex items-center gap-3 p-3.5 rounded-lg glass shadow-elev-3'
                     )}
+                    style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }}
                 >
-                    <div className="flex items-center gap-3">
-                        {/* Icon */}
-                        <div className="w-11 h-11 min-w-[44px] rounded-xl flex items-center justify-center shadow-md overflow-hidden relative">
-                            <Image
-                                src="/icons/icon-192x192.png"
-                                alt="Cadence Logo"
-                                fill
-                                className="object-cover"
-                            />
-                        </div>
-
-                        {/* Text */}
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-text-primary">Install Cadence</p>
-                            <p className="text-xs text-text-secondary leading-tight">Add to home screen for the full experience</p>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                            <button
-                                onClick={handleInstall}
-                                className="px-4 py-2.5 bg-[#4ecdc4] text-white text-sm font-semibold rounded-xl active:scale-95 transition-transform min-h-[44px]"
-                            >
-                                Install
-                            </button>
-                            <button
-                                onClick={handleDismiss}
-                                className="p-2.5 rounded-lg text-text-secondary hover:bg-bg-secondary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
+                    <span className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center shadow-[0_4px_12px_var(--accent-glow)] bg-[linear-gradient(140deg,var(--accent),color-mix(in_srgb,var(--accent)_55%,#7c5cff))]">
+                        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--on-accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 13a8 8 0 108-9" /><path d="M12 8v4l3 2" /></svg>
+                    </span>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-text-primary">Install Cadence</p>
+                        <p className="text-xs text-text-secondary leading-tight">Add to your home screen for the full experience.</p>
                     </div>
+                    <button
+                        onClick={handleInstall}
+                        className="px-3.5 py-2 rounded-[10px] bg-accent text-on-accent text-sm font-semibold active:scale-95 transition-transform shrink-0"
+                    >
+                        Install
+                    </button>
+                    <button
+                        onClick={handleDismiss}
+                        aria-label="Dismiss"
+                        className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg text-text-tertiary hover:bg-bg-secondary transition-colors"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
                 </motion.div>
             )}
         </AnimatePresence>

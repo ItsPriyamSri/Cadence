@@ -14,26 +14,10 @@ interface CalendarEventCardProps {
     isDraggable?: boolean;
 }
 
-// Softer color config based on semantic classes
 const statusColors = {
-    scheduled: {
-        bg: 'bg-accent/15',
-        border: 'border-l-accent',
-        text: 'text-accent',
-        dot: 'bg-accent',
-    },
-    active: {
-        bg: 'bg-warning/15',
-        border: 'border-l-warning',
-        text: 'text-warning',
-        dot: 'bg-warning',
-    },
-    completed: {
-        bg: 'bg-success/15',
-        border: 'border-l-success',
-        text: 'text-success',
-        dot: 'bg-success',
-    },
+    scheduled: { bg: 'bg-accent-subtle', border: 'var(--accent)', text: 'text-accent', dot: 'bg-accent' },
+    active: { bg: 'bg-started-bg', border: 'var(--started)', text: 'text-started', dot: 'bg-started' },
+    completed: { bg: 'bg-done-bg', border: 'var(--done)', text: 'text-done', dot: 'bg-done' },
 };
 
 function getStatusColors(status: string) {
@@ -48,57 +32,35 @@ export function CalendarEvent({ event, onClick, style, isDraggable }: CalendarEv
     return (
         <motion.div
             layout
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={onClick}
-            style={style}
+            style={{ ...style, borderLeftColor: colors.border }}
             className={cn(
-                'rounded-2xl border-l-4 px-3 py-2 transition-all overflow-hidden h-full',
-                'hover:shadow-lg cursor-pointer active:scale-[0.98]',
+                'relative rounded-md border-l-[3px] px-3 py-2 overflow-hidden h-full shadow-elev-1',
+                'cursor-pointer active:scale-[0.98] hover:shadow-elev-2 transition-shadow',
                 colors.bg,
-                colors.border,
                 event.status === 'completed' && 'opacity-60',
                 isDraggable && 'cursor-grab active:cursor-grabbing'
             )}
         >
-            {/* Horizontal layout: drag handle, title, time */}
-            <div className="flex items-center gap-2 h-full">
-                {/* Drag handle indicator */}
-                {isDraggable && (
-                    <GripVertical className="w-3 h-3 text-text-secondary/40 flex-shrink-0" />
-                )}
-
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {/* Status dot */}
-                    <motion.div
-                        animate={event.status === 'active' ? {
-                            scale: [1, 1.3, 1],
-                            opacity: [1, 0.7, 1],
-                        } : undefined}
-                        transition={event.status === 'active' ? {
-                            duration: 1.5,
-                            repeat: Infinity,
-                        } : undefined}
-                        className={cn('w-2 h-2 rounded-full flex-shrink-0', colors.dot)}
-                    />
-
-                    <p className={cn(
-                        'text-sm font-medium truncate',
-                        event.status === 'completed' ? 'line-through text-text-secondary' : 'text-text-primary'
-                    )}>
-                        {event.title}
-                    </p>
-                </div>
-
-                <span className={cn('text-xs font-medium whitespace-nowrap flex-shrink-0', colors.text)}>
-                    {formatTime(event.startTime)} - {formatTime(event.endTime)}
+            <div className="flex items-center gap-1.5 h-full">
+                {isDraggable && <GripVertical className="w-3 h-3 text-text-tertiary shrink-0" />}
+                <motion.span
+                    animate={event.status === 'active' ? { scale: [1, 1.3, 1], opacity: [1, 0.7, 1] } : undefined}
+                    transition={event.status === 'active' ? { duration: 1.5, repeat: Infinity } : undefined}
+                    className={cn('w-2 h-2 rounded-full shrink-0', colors.dot)}
+                />
+                <span className={cn(
+                    'text-sm font-semibold truncate flex-1 min-w-0',
+                    event.status === 'completed' ? 'line-through text-text-secondary' : 'text-text-primary'
+                )}>
+                    {event.title}
+                </span>
+                <span className={cn('text-[11px] font-medium whitespace-nowrap shrink-0', colors.text)}>
+                    {formatTime(event.startTime)}–{formatTime(event.endTime)}
                 </span>
             </div>
-
-            {/* Active indicator glow */}
-            {event.status === 'active' && (
-                <div className="absolute inset-0 rounded-2xl bg-warning/5 animate-pulse pointer-events-none" />
-            )}
         </motion.div>
     );
 }

@@ -1,133 +1,118 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Loader2, PenLine } from 'lucide-react';
+import { Plus, PenLine } from 'lucide-react';
 import { NoteCard } from './NoteCard';
+import { NoteDetail } from './NoteDetail';
 import { NoteOverlay } from './NoteOverlay';
+import { GoalsTile } from '@/components/goals/GoalsTile';
 import { useNotes } from '@/lib/hooks/useNotes';
 import { createNote } from '@/lib/actions/notes';
-import { staggerContainer, fadeIn } from '@/lib/utils/animations';
-import { cn } from '@/lib/utils/cn';
+import { useAppStore } from '@/lib/store/app';
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 
 export function NoteEditor() {
     const { notes, loading } = useNotes();
-    const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-    const [isCreating, setIsCreating] = useState(false);
+    const { noteComposeNonce } = useAppStore();
+    const isRail = useMediaQuery('(min-width: 768px)');
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const lastNonce = useRef(noteComposeNonce);
 
-    // Sort notes: priority first, then by updatedAt
     const sortedNotes = useMemo(() => {
         return [...notes].sort((a, b) => {
             if (a.priority && !b.priority) return -1;
             if (!a.priority && b.priority) return 1;
-            const aTime = a.updatedAt?.toMillis?.() || 0;
-            const bTime = b.updatedAt?.toMillis?.() || 0;
-            return bTime - aTime;
+            return (b.updatedAt?.toMillis?.() || 0) - (a.updatedAt?.toMillis?.() || 0);
         });
     }, [notes]);
 
-    const editingNote = editingNoteId ? notes.find(n => n.id === editingNoteId) || null : null;
+    const selectedNote = selectedId ? notes.find((n) => n.id === selectedId) || null : null;
 
-    const handleCreateNote = async () => {
-        setIsCreating(true);
+    const handleCapture = async () => {
         try {
-            const noteId = await createNote('');
-            // Immediately open in edit overlay
-            setEditingNoteId(noteId);
+            const id = await createNote('');
+            setSelectedId(id);
         } catch (error) {
             console.error('Failed to create note:', error);
-        } finally {
-            setIsCreating(false);
         }
     };
 
-    const handleOpenNote = (noteId: string) => {
-        setEditingNoteId(noteId);
-    };
-
-    const handleCloseOverlay = () => {
-        setEditingNoteId(null);
-    };
+    // Shell FAB / topbar "Capture a Thought" signal
+    useEffect(() => {
+        if (noteComposeNonce === lastNonce.current) return;
+        lastNonce.current = noteComposeNonce;
+        void handleCapture();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [noteComposeNonce]);
 
     if (loading) {
         return (
-            <motion.div
-                variants={fadeIn}
-                initial="hidden"
-                animate="visible"
-                className="flex flex-col items-center justify-center py-16 gap-4"
-            >
-                <div className="w-12 h-12 rounded-full border-4 border-[#4ecdc4]/20 border-t-[#4ecdc4] animate-spin" />
-                <p className="text-sm text-text-secondary">Loading notes...</p>
-            </motion.div>
+            <div className="flex flex-col items-center justify-center gap-3.5 py-16 text-text-secondary">
+                <span className="w-8 h-8 border-[3px] border-border-strong border-t-accent rounded-full animate-cad-spin" />
+                <span className="text-sm font-medium">Loading notes…</span>
+            </div>
         );
     }
 
     return (
-        <div className="space-y-4">
-            {/* New Note Button */}
-            <button
-                onClick={handleCreateNote}
-                disabled={isCreating}
-                className={cn(
-                    'w-full p-5 rounded-2xl border-2 border-dashed transition-all duration-200',
-                    'border-border hover:border-[#4ecdc4] hover:bg-[#4ecdc4]/5',
-                    'flex items-center justify-center gap-3 group',
-                    'active:scale-[0.99]',
-                    isCreating && 'opacity-50 cursor-wait'
-                )}
-            >
-                {isCreating ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-[#4ecdc4]" />
-                ) : (
-                    <div className="p-2 rounded-xl bg-bg-secondary group-hover:bg-[#4ecdc4]/20 transition-colors">
-                        <Plus className="w-5 h-5 text-text-secondary group-hover:text-[#4ecdc4] transition-colors" />
-                    </div>
-                )}
-                <span className="text-base font-medium text-text-secondary group-hover:text-[#4ecdc4] transition-colors">
-                    {isCreating ? 'Creating...' : 'Capture a Thought'}
-                </span>
-            </button>
+        <div className="flex flex-col md:flex-row gap-5 md:h-full">
+            {/* LIST COLUMN */}
+            <div className="w-full md:w-[360px] md:shrink-0 flex flex-col min-w-0 md:min-h-0">
+                <GoalsTile />
 
-            {/* Notes List */}
-            {sortedNotes.length === 0 ? (
-                <motion.div
-                    variants={fadeIn}
-                    initial="hidden"
-                    animate="visible"
-                    className="text-center py-16"
-                >
-                    <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-[#4ecdc4]/20 to-[#a8dadc]/20 flex items-center justify-center shadow-inner">
-                        <PenLine className="w-10 h-10 text-[#4ecdc4]" />
+                <div className="flex items-center gap-2.5 mt-5 mb-3 mx-1">
+                    <span className="text-xs font-bold tracking-[0.06em] uppercase text-text-tertiary">Recent Notes</span>
+                    <div className="flex-1" />
+                    <button
+                        onClick={handleCapture}
+                        className="md:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-subtle text-accent text-sm font-semibold"
+                    >
+                        <Plus className="w-[15px] h-[15px]" strokeWidth={2.4} /> Capture
+                    </button>
+                </div>
+
+                {sortedNotes.length === 0 ? (
+                    <div className="flex flex-col items-center text-center gap-2 py-12 px-6">
+                        <div className="w-[72px] h-[72px] rounded-4xl bg-accent-subtle flex items-center justify-center mb-1">
+                            <PenLine className="w-8 h-8 text-accent" strokeWidth={1.8} />
+                        </div>
+                        <h2 className="text-lg font-bold text-text-primary">No notes yet</h2>
+                        <p className="text-base text-text-secondary max-w-[260px]">Capture your thoughts and ideas before they slip away.</p>
+                        <button
+                            onClick={handleCapture}
+                            className="mt-2.5 flex items-center gap-2 px-5 py-3 rounded-md bg-accent text-on-accent text-base font-semibold shadow-[0_6px_18px_var(--accent-glow)] hover:brightness-105 transition"
+                        >
+                            <Plus className="w-[18px] h-[18px]" strokeWidth={2.4} /> Capture a thought
+                        </button>
                     </div>
-                    <p className="text-xl font-semibold text-text-primary mb-2">No notes yet</p>
-                    <p className="text-text-secondary">Capture your thoughts and ideas</p>
-                </motion.div>
-            ) : (
-                <motion.div
-                    variants={staggerContainer}
-                    initial="hidden"
-                    animate="visible"
-                    className="space-y-3"
-                >
-                    <AnimatePresence mode="popLayout">
-                        {sortedNotes.map((note) => (
-                            <NoteCard
-                                key={note.id}
-                                note={note}
-                                onClick={() => handleOpenNote(note.id)}
-                            />
-                        ))}
-                    </AnimatePresence>
-                </motion.div>
+                ) : (
+                    <div className="flex flex-col gap-2.5 md:flex-1 md:min-h-0 md:overflow-y-auto">
+                        <AnimatePresence mode="popLayout">
+                            {sortedNotes.map((note) => (
+                                <NoteCard
+                                    key={note.id}
+                                    note={note}
+                                    selected={isRail && note.id === selectedId}
+                                    onClick={() => setSelectedId(note.id)}
+                                />
+                            ))}
+                        </AnimatePresence>
+                    </div>
+                )}
+            </div>
+
+            {/* DETAIL COLUMN (rail only) */}
+            {isRail && (
+                <div className="flex-1 min-w-0 flex flex-col rounded-lg border border-border bg-bg-primary shadow-elev-1 overflow-hidden">
+                    <NoteDetail note={selectedNote} onDeleted={() => setSelectedId(null)} />
+                </div>
             )}
 
-            {/* Full-screen Note Overlay */}
-            <NoteOverlay
-                note={editingNote}
-                isOpen={!!editingNoteId}
-                onClose={handleCloseOverlay}
-            />
+            {/* MOBILE OVERLAY */}
+            {!isRail && (
+                <NoteOverlay note={selectedNote} isOpen={!!selectedNote} onClose={() => setSelectedId(null)} />
+            )}
         </div>
     );
 }

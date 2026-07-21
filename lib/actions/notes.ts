@@ -56,7 +56,7 @@ export async function createNote(content: string = ''): Promise<string> {
     }
 }
 
-export async function updateNote(noteId: string, updates: Partial<Note>) {
+export async function updateNote(noteId: string, updates: Partial<Note>): Promise<boolean> {
     useNotesStore.getState().updateNote(noteId, {
         ...updates,
         updatedAt: Timestamp.now(),
@@ -68,8 +68,10 @@ export async function updateNote(noteId: string, updates: Partial<Note>) {
             ...updates,
             updatedAt: serverTimestamp(),
         });
+        return true;
     } catch (error) {
         console.error('Failed to update note:', error);
+        return false;
     }
 }
 

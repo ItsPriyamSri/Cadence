@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import { TaskList } from '@/components/tasks/TaskList';
 import { TaskForm } from '@/components/tasks/TaskForm';
 import { StatusModal } from '@/components/tasks/StatusModal';
+import { DeleteTaskModal } from '@/components/tasks/DeleteTaskModal';
 import { Modal } from '@/components/ui/Modal';
-import { Confetti } from '@/components/ui/Confetti';
 import { useAppStore } from '@/lib/store/app';
 import { useTasks } from '@/lib/hooks/useTasks';
 import { fadeIn } from '@/lib/utils/animations';
@@ -15,24 +15,13 @@ export default function TasksPage() {
     const { isTaskFormOpen, editingTaskId, closeTaskForm } = useAppStore();
     const { tasks } = useTasks();
 
-    const editingTask = editingTaskId
-        ? tasks.find((t) => t.id === editingTaskId)
-        : null;
+    const editingTask = editingTaskId ? tasks.find((t) => t.id === editingTaskId) : null;
 
     return (
-        <motion.div
-            variants={fadeIn}
-            initial="hidden"
-            animate="visible"
-            className="max-w-2xl mx-auto"
-        >
-            {/* Tasks Section */}
-            <div className="p-4">
-                <h1 className="text-2xl font-bold text-text-primary mb-4">Tasks</h1>
-                <TaskList />
-            </div>
+        <motion.div variants={fadeIn} initial="hidden" animate="visible" className="max-w-[820px] mx-auto px-4 pt-3 md:px-8 md:pt-0 pb-[calc(env(safe-area-inset-bottom,0px)+120px)] md:pb-10">
+            <h1 className="md:hidden mb-3.5 mt-1 mx-1 text-xl font-bold tracking-tight text-text-primary">Tasks</h1>
+            <TaskList />
 
-            {/* Task Form Modal */}
             <Modal
                 isOpen={isTaskFormOpen}
                 onClose={closeTaskForm}
@@ -41,11 +30,8 @@ export default function TasksPage() {
                 <TaskForm initialTask={editingTask} onClose={closeTaskForm} />
             </Modal>
 
-            {/* Status Change Modal */}
             <StatusModal />
-
-            {/* Confetti Celebration */}
-            <Confetti />
+            <DeleteTaskModal />
         </motion.div>
     );
 }

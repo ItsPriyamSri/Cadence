@@ -4,7 +4,7 @@ import React, { useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
-import { backdrop, modalContent } from '@/lib/utils/animations';
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 
 interface ModalProps {
     isOpen: boolean;
@@ -15,87 +15,71 @@ interface ModalProps {
     showClose?: boolean;
 }
 
-export function Modal({
-    isOpen,
-    onClose,
-    title,
-    children,
-    className,
-    showClose = true,
-}: ModalProps) {
-    // Handle escape key
-    const handleEscape = useCallback(
-        (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                onClose();
-            }
-        },
-        [onClose]
-    );
+export function Modal({ isOpen, onClose, title, children, className, showClose = true }: ModalProps) {
+    const isDesktop = useMediaQuery('(min-width: 768px)');
+
+    const handleEscape = useCallback((e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+    }, [onClose]);
 
     useEffect(() => {
         if (isOpen) {
             document.addEventListener('keydown', handleEscape);
             document.body.style.overflow = 'hidden';
         }
-
         return () => {
             document.removeEventListener('keydown', handleEscape);
             document.body.style.overflow = '';
         };
     }, [isOpen, handleEscape]);
 
+    const contentAnim = isDesktop
+        ? { initial: { opacity: 0, scale: 0.96, y: 8 }, animate: { opacity: 1, scale: 1, y: 0 }, exit: { opacity: 0, scale: 0.96, y: 8 } }
+        : { initial: { y: '100%' }, animate: { y: 0 }, exit: { y: '100%' } };
+
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-                    {/* Backdrop */}
+                <div className={cn('fixed inset-0 z-50 flex justify-center', isDesktop ? 'items-center p-6' : 'items-end')}>
                     <motion.div
-                        variants={backdrop}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                        className="absolute inset-0 bg-black/50 backdrop-blur-[3px]"
                     />
 
-                    {/* Modal content */}
                     <motion.div
-                        variants={modalContent}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
+                        {...contentAnim}
+                        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                         className={cn(
-                            'relative z-10',
-                            'w-full max-w-md',
-                            'bg-bg-primary rounded-3xl shadow-2xl',
-                            'border border-white/5',
-                            'max-h-[85vh] overflow-hidden flex flex-col',
+                            'relative z-10 w-full flex flex-col bg-bg-primary border border-border',
+                            'max-h-[90vh] overflow-hidden shadow-elev-4',
+                            isDesktop ? 'max-w-md rounded-lg' : 'rounded-t-[var(--r-xl)]',
                             className
                         )}
                     >
-                        {/* Header */}
+                        {!isDesktop && <div className="mx-auto mt-3 mb-1 w-10 h-[5px] rounded-full bg-border-strong shrink-0" />}
+
                         {(title || showClose) && (
-                            <div className="flex items-center justify-between p-5 border-b border-border/50">
-                                {title && (
-                                    <h2 className="text-xl font-bold text-text-primary tracking-tight">
-                                        {title}
-                                    </h2>
-                                )}
+                            <div className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
+                                {title && <h2 className="text-lg font-bold tracking-tight text-text-primary">{title}</h2>}
                                 {showClose && (
                                     <button
                                         onClick={onClose}
-                                        className="p-2 rounded-xl hover:bg-bg-secondary transition-colors text-text-secondary hover:text-text-primary"
-                                        aria-label="Close modal"
+                                        aria-label="Close"
+                                        className="w-[34px] h-[34px] flex items-center justify-center rounded-[10px] bg-bg-secondary text-text-secondary hover:text-text-primary transition-colors"
                                     >
-                                        <X className="w-5 h-5" />
+                                        <X className="w-[18px] h-[18px]" strokeWidth={2.2} />
                                     </button>
                                 )}
                             </div>
                         )}
 
-                        {/* Body */}
-                        <div className="flex-1 overflow-auto custom-scrollbar">
+                        <div
+                            className="flex-1 overflow-auto custom-scrollbar"
+                            style={!isDesktop ? { paddingBottom: 'env(safe-area-inset-bottom, 0px)' } : undefined}
+                        >
                             {children}
                         </div>
                     </motion.div>
