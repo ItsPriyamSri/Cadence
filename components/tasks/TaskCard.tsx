@@ -53,9 +53,31 @@ export function TaskCard({ task }: TaskCardProps) {
         else await updateTaskStatus(task.id, next);
     };
 
+    // Play button: tap = play/pause toggle, hold = open the 4-option status menu.
+    const longPressRef = useRef(false);
+    const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const cancelPress = () => {
+        if (pressTimerRef.current) { clearTimeout(pressTimerRef.current); pressTimerRef.current = null; }
+    };
+    useEffect(() => cancelPress, []);
+
+    const handleIconPressStart = (e: React.PointerEvent) => {
+        e.stopPropagation();
+        longPressRef.current = false;
+        pressTimerRef.current = setTimeout(() => {
+            longPressRef.current = true;
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(25);
+            openStatusModal(task.id);
+        }, 450);
+    };
+
     const handleIconClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        openStatusModal(task.id);
+        cancelPress();
+        if (longPressRef.current) { longPressRef.current = false; return; }
+        const next = getNextStatus(task.status);
+        if (next) updateTaskStatus(task.id, next);
     };
 
     const handleStar = async (e: React.MouseEvent) => {
@@ -101,7 +123,11 @@ export function TaskCard({ task }: TaskCardProps) {
             {/* Status icon button */}
             <button
                 onClick={handleIconClick}
-                aria-label="Change status"
+                onPointerDown={handleIconPressStart}
+                onPointerUp={cancelPress}
+                onPointerLeave={cancelPress}
+                onContextMenu={(e) => e.preventDefault()}
+                aria-label="Toggle status; hold for more options"
                 className={cn(
                     'relative shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-transform active:scale-95',
                     config.iconBg, config.iconColor

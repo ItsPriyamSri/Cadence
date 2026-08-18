@@ -13,7 +13,7 @@ interface NoteDetailProps {
 }
 
 export function NoteDetail({ note, onDeleted }: NoteDetailProps) {
-    const { title, body, saving, error, onTitle, onBody } = useNoteDraft(note);
+    const { content, saving, error, onContent } = useNoteDraft(note);
 
     if (!note) {
         return (
@@ -49,17 +49,12 @@ export function NoteDetail({ note, onDeleted }: NoteDetailProps) {
                     <Trash2 className="w-[18px] h-[18px]" />
                 </button>
             </div>
-            <input
-                value={title}
-                onChange={(e) => onTitle(e.target.value)}
-                placeholder="Note title"
-                className="border-none bg-transparent px-5 pt-[18px] pb-1.5 text-[22px] font-bold tracking-tight text-text-primary outline-none"
-            />
             <textarea
-                value={body}
-                onChange={(e) => onBody(e.target.value)}
+                autoFocus
+                value={content}
+                onChange={(e) => onContent(e.target.value)}
                 placeholder="Start writing…"
-                className="flex-1 border-none bg-transparent px-5 pb-5 pt-1.5 text-base leading-relaxed text-text-primary outline-none resize-none"
+                className="flex-1 border-none bg-transparent px-5 py-[18px] text-base leading-relaxed text-text-primary outline-none resize-none"
             />
         </>
     );

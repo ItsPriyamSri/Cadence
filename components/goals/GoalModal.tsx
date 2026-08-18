@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Trash2 } from 'lucide-react';
+import { Timestamp } from 'firebase/firestore';
 import { Modal } from '@/components/ui/Modal';
 import { useAppStore } from '@/lib/store/app';
 import { useGoals } from '@/lib/hooks/useGoals';
@@ -15,7 +16,10 @@ const typeOptions: { id: GoalType; label: string }[] = [
     { id: 'weekly', label: 'Weekly' },
     { id: 'monthly', label: 'Monthly' },
     { id: 'quarterly', label: 'Quarterly' },
+    { id: 'custom', label: 'Custom' },
 ];
+
+const toDateInput = (d: Date) => format(d, 'yyyy-MM-dd');
 
 const fieldClass =
     'w-full box-border px-3.5 py-3 rounded-md border-[1.5px] border-border bg-bg-secondary text-text-primary text-base font-[inherit] outline-none focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-subtle)] focus:bg-bg-primary transition';
@@ -28,19 +32,26 @@ export function GoalModal() {
     const [title, setTitle] = useState('');
     const [type, setType] = useState<GoalType>('weekly');
     const [progress, setProgress] = useState(0);
+    const [customStart, setCustomStart] = useState('');
+    const [customEnd, setCustomEnd] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
     const [submitError, setSubmitError] = useState('');
 
     useEffect(() => {
+        const today = toDateInput(new Date());
         if (editingGoal) {
             setTitle(editingGoal.title);
             setType(editingGoal.type);
             setProgress(Math.round(editingGoal.progress ?? 0));
+            setCustomStart(toDateInput(editingGoal.startDate.toDate()));
+            setCustomEnd(toDateInput(editingGoal.endDate.toDate()));
         } else {
             setTitle('');
             setType('weekly');
             setProgress(0);
+            setCustomStart(today);
+            setCustomEnd(today);
         }
         setError(false);
         setSubmitError('');
@@ -49,27 +60,39 @@ export function GoalModal() {
     const dateRange = useMemo(() => {
         const now = new Date();
         switch (type) {
-            case 'weekly':
-                return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
             case 'monthly':
                 return { start: startOfMonth(now), end: endOfMonth(now) };
             case 'quarterly': {
                 const quarter = Math.floor(now.getMonth() / 3);
                 return { start: new Date(now.getFullYear(), quarter * 3, 1), end: new Date(now.getFullYear(), quarter * 3 + 3, 0) };
             }
+            case 'weekly':
+            default:
+                return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
         }
     }, [type]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title.trim()) { setError(true); return; }
+        const startDate = new Date(customStart + 'T00:00:00');
+        const endDate = new Date(customEnd + 'T00:00:00');
+        if (type === 'custom' && (!customStart || !customEnd || endDate < startDate)) {
+            setSubmitError('Please pick a valid start and end date.');
+            return;
+        }
         setLoading(true);
         setSubmitError('');
         try {
             if (editingGoal) {
-                await updateGoal(editingGoal.id, { title: title.trim(), type, progress });
+                const updates: Parameters<typeof updateGoal>[1] = { title: title.trim(), type, progress };
+                if (type === 'custom') {
+                    updates.startDate = Timestamp.fromDate(startDate);
+                    updates.endDate = Timestamp.fromDate(endDate);
+                }
+                await updateGoal(editingGoal.id, updates);
             } else {
-                await createGoal({ title: title.trim(), type, progress });
+                await createGoal({ title: title.trim(), type, progress, startDate, endDate });
             }
             closeGoalModal();
         } catch (err) {
@@ -127,9 +150,22 @@ export function GoalModal() {
                             </button>
                         ))}
                     </div>
-                    <p className="mt-2 text-xs text-text-tertiary">
-                        {format(dateRange.start, 'MMM d')} – {format(dateRange.end, 'MMM d, yyyy')}
-                    </p>
+                    {type === 'custom' ? (
+                        <div className="flex gap-2 mt-2.5">
+                            <label className="flex-1 flex flex-col gap-1">
+                                <span className="text-xs font-semibold text-text-secondary">Start</span>
+                                <input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className={fieldClass} />
+                            </label>
+                            <label className="flex-1 flex flex-col gap-1">
+                                <span className="text-xs font-semibold text-text-secondary">End</span>
+                                <input type="date" value={customEnd} min={customStart} onChange={(e) => setCustomEnd(e.target.value)} className={fieldClass} />
+                            </label>
+                        </div>
+                    ) : (
+                        <p className="mt-2 text-xs text-text-tertiary">
+                            {format(dateRange.start, 'MMM d')} – {format(dateRange.end, 'MMM d, yyyy')}
+                        </p>
+                    )}
                 </div>
 
                 <div>

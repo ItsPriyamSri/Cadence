@@ -13,12 +13,6 @@ export function splitNote(content: string): { title: string; body: string } {
     return { title: text.slice(0, nl), body: text.slice(nl + 1) };
 }
 
-export function joinNote(title: string, body: string): string {
-    const t = title ?? '';
-    const b = body ?? '';
-    return b.length > 0 ? `${t}\n${b}` : t;
-}
-
 export function noteTitle(note: Pick<Note, 'content'>): string {
     const { title } = splitNote(note.content);
     return title.trim() || 'Untitled note';

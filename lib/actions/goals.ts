@@ -19,12 +19,14 @@ import {
     endOfMonth,
 } from 'date-fns';
 
-export type GoalType = 'weekly' | 'monthly' | 'quarterly';
+export type GoalType = 'weekly' | 'monthly' | 'quarterly' | 'custom';
 
 interface CreateGoalInput {
     title: string;
     type: GoalType;
     progress?: number;
+    startDate?: Date;
+    endDate?: Date;
 }
 
 function generateTempId(): string {
@@ -50,6 +52,8 @@ function getGoalDateRange(type: GoalType): { start: Date; end: Date } {
             const quarterStart = new Date(now.getFullYear(), quarter * 3, 1);
             const quarterEnd = new Date(now.getFullYear(), quarter * 3 + 3, 0);
             return { start: quarterStart, end: quarterEnd };
+        case 'custom':
+            return { start: now, end: now };
     }
 }
 
@@ -58,7 +62,9 @@ export async function createGoal(input: CreateGoalInput): Promise<string> {
     if (!userId) throw new Error('Not authenticated');
 
     const tempId = generateTempId();
-    const { start, end } = getGoalDateRange(input.type);
+    const { start, end } = input.type === 'custom' && input.startDate && input.endDate
+        ? { start: input.startDate, end: input.endDate }
+        : getGoalDateRange(input.type);
     const now = Timestamp.now();
 
     // Optimistic update
