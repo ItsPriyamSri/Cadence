@@ -66,9 +66,7 @@ export function TaskCard({ task }: TaskCardProps) {
         if (swipedRef.current) { swipedRef.current = false; return; }
         if (isDone || isMenuOpen) return;
         const next = getNextStatus(task.status);
-        if (!next) return;
-        if (next === 'done') openStatusModal(task.id);
-        else await updateTaskStatus(task.id, next);
+        if (next) await updateTaskStatus(task.id, next);
     };
 
     // Play button: tap = play/pause toggle, hold = open the 4-option status menu.

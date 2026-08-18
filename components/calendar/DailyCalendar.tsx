@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import {
     DndContext, DragOverlay, useSensor, useSensors, PointerSensor, TouchSensor,
@@ -230,11 +231,16 @@ export function DailyCalendar() {
                 </aside>
             </motion.div>
 
-            <DragOverlay>
-                {activeId && (dragType === 'event'
-                    ? <EventDragOverlay eventId={activeId} events={events} />
-                    : <TaskDragOverlay taskId={activeId} tasks={tasks} />)}
-            </DragOverlay>
+            {/* Portal to body so the overlay's fixed positioning tracks the finger,
+                not an ancestor scroll/transform containing block. */}
+            {typeof document !== 'undefined' && createPortal(
+                <DragOverlay>
+                    {activeId && (dragType === 'event'
+                        ? <EventDragOverlay eventId={activeId} events={events} />
+                        : <TaskDragOverlay taskId={activeId} tasks={tasks} />)}
+                </DragOverlay>,
+                document.body
+            )}
 
             <EventTimeEditor event={editingEvent} isOpen={!!editingEvent} onClose={() => setEditingEvent(null)} />
         </DndContext>
