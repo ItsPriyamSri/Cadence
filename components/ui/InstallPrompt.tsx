@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
+import { CadenceMark } from '@/components/auth/AuthBits';
 
 interface BeforeInstallPromptEvent extends Event {
     prompt: () => Promise<void>;
@@ -91,9 +92,7 @@ export function InstallPrompt() {
                     )}
                     style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }}
                 >
-                    <span className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center shadow-[0_4px_12px_var(--accent-glow)] bg-[linear-gradient(140deg,var(--accent),color-mix(in_srgb,var(--accent)_55%,#7c5cff))]">
-                        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--on-accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 13a8 8 0 108-9" /><path d="M12 8v4l3 2" /></svg>
-                    </span>
+                    <CadenceMark className="w-10 h-10 shrink-0 rounded-xl" />
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-text-primary">Install Cadence</p>
                         <p className="text-xs text-text-secondary leading-tight">Add to your home screen for the full experience.</p>

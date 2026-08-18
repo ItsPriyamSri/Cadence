@@ -27,9 +27,9 @@ export function GoalsTile() {
         <div className="rounded-lg overflow-hidden border border-border shadow-elev-1">
             <button
                 onClick={toggleGoalsExpanded}
-                className="flex items-center gap-3 w-full p-4 text-left text-white bg-[linear-gradient(120deg,color-mix(in_srgb,var(--accent)_88%,#7c5cff),var(--secondary))]"
+                className="flex items-center gap-3 w-full p-4 text-left bg-accent text-on-accent"
             >
-                <span className="w-[38px] h-[38px] shrink-0 flex items-center justify-center rounded-xl bg-white/20">
+                <span className="w-[38px] h-[38px] shrink-0 flex items-center justify-center rounded-xl bg-on-accent/15">
                     <Target className="w-5 h-5" />
                 </span>
                 <div className="flex-1">

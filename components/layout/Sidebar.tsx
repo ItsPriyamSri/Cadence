@@ -9,6 +9,7 @@ import { useUser, signOut } from '@/lib/firebase/auth';
 import { useTasks } from '@/lib/hooks/useTasks';
 import { useAppStore } from '@/lib/store/app';
 import { navItems } from './navConfig';
+import { CadenceMark } from '@/components/auth/AuthBits';
 
 export function Sidebar() {
     const pathname = usePathname();
@@ -25,9 +26,7 @@ export function Sidebar() {
         <aside className="hidden md:flex flex-col shrink-0 w-60 h-full box-border px-4 py-6 glass border-r border-[var(--glass-border)]">
             {/* Logo */}
             <Link href="/tasks" className="flex items-center gap-3 px-2 pb-6">
-                <span className="w-10 h-10 rounded-xl flex items-center justify-center shadow-[0_6px_16px_var(--accent-glow)] bg-[linear-gradient(140deg,var(--accent),color-mix(in_srgb,var(--accent)_55%,#7c5cff))]">
-                    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--on-accent)" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 13a8 8 0 108-9" /><path d="M12 8v4l3 2" /></svg>
-                </span>
+                <CadenceMark className="w-10 h-10 rounded-xl" />
                 <span className="text-lg font-bold tracking-tight text-text-primary">Cadence</span>
             </Link>
 
@@ -73,7 +72,7 @@ export function Sidebar() {
                 </button>
 
                 <div className="flex items-center gap-2.5 p-2 rounded-md">
-                    <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-sm bg-[linear-gradient(140deg,var(--accent),var(--secondary))]">
+                    <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-accent text-on-accent font-bold text-sm">
                         {initial}
                     </span>
                     <div className="min-w-0 flex-1">
