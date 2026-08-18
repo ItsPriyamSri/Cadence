@@ -15,7 +15,7 @@ interface NoteOverlayProps {
 }
 
 export function NoteOverlay({ note, isOpen, onClose }: NoteOverlayProps) {
-    const { title, body, saving, error, onTitle, onBody } = useNoteDraft(note);
+    const { content, saving, error, onContent } = useNoteDraft(note);
 
     useEffect(() => {
         if (isOpen) document.body.style.overflow = 'hidden';
@@ -59,18 +59,12 @@ export function NoteOverlay({ note, isOpen, onClose }: NoteOverlayProps) {
                             <Trash2 className="w-[19px] h-[19px]" />
                         </button>
                     </div>
-                    <input
-                        value={title}
-                        onChange={(e) => onTitle(e.target.value)}
-                        placeholder="Note title"
-                        className="border-none bg-transparent px-[18px] pt-[18px] pb-1.5 text-[23px] font-bold tracking-tight text-text-primary outline-none"
-                    />
                     <textarea
                         autoFocus
-                        value={body}
-                        onChange={(e) => onBody(e.target.value)}
+                        value={content}
+                        onChange={(e) => onContent(e.target.value)}
                         placeholder="Start writing…"
-                        className="flex-1 border-none bg-transparent px-[18px] pt-1.5 text-base leading-relaxed text-text-primary outline-none resize-none"
+                        className="flex-1 border-none bg-transparent px-[18px] pt-[18px] text-base leading-relaxed text-text-primary outline-none resize-none"
                         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 18px)' }}
                     />
                 </motion.div>

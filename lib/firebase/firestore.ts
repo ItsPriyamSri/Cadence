@@ -74,7 +74,7 @@ export interface Goal {
     id: string;
     userId: string;
     title: string;
-    type: 'weekly' | 'monthly' | 'quarterly';
+    type: 'weekly' | 'monthly' | 'quarterly' | 'custom';
     startDate: Timestamp;
     endDate: Timestamp;
     createdAt: Timestamp;

@@ -151,7 +151,7 @@ export function DailyCalendar() {
                 className="h-full flex flex-col md:flex-row md:gap-5 px-4 pt-3 md:px-8 md:pt-0"
             >
                 {/* Timeline column */}
-                <div className="flex-1 min-w-0 flex flex-col pb-[calc(env(safe-area-inset-bottom,0px)+96px)] md:pb-6">
+                <div className="flex-1 min-w-0 min-h-0 flex flex-col pb-[calc(env(safe-area-inset-bottom,0px)+96px)] md:pb-6">
                     <ActiveTaskBanner />
 
                     {/* Date nav */}
@@ -178,7 +178,7 @@ export function DailyCalendar() {
                     </div>
 
                     {/* Timeline scroll */}
-                    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto rounded-lg border border-border bg-bg-primary shadow-elev-1">
+                    <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto rounded-lg border border-border bg-bg-primary shadow-elev-1">
                         <div className="relative">
                             {hours.map((hour) => (
                                 <HourRow key={hour} hour={hour} date={dateKey} activeId={activeId} />
