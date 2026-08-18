@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import {
     DndContext, DragOverlay, useSensor, useSensors, PointerSensor, TouchSensor,
     DragStartEvent, DragEndEvent, useDraggable, useDroppable,
 } from '@dnd-kit/core';
-import { ChevronLeft, ChevronRight, Loader2, GripVertical, Move } from 'lucide-react';
+import { ChevronLeft, ChevronRight, GripVertical, Move } from 'lucide-react';
+import { CadenceLoader } from '@/components/ui/CadenceLoader';
 import { ActiveTaskBanner } from './ActiveTaskBanner';
 import { CalendarEvent } from './CalendarEvent';
 import { EventTimeEditor } from './EventTimeEditor';
@@ -137,8 +139,8 @@ export function DailyCalendar() {
 
     if (loading && events.length === 0) {
         return (
-            <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-accent" />
+            <div className="flex items-center justify-center py-16">
+                <CadenceLoader label="Loading your day" />
             </div>
         );
     }
@@ -229,11 +231,16 @@ export function DailyCalendar() {
                 </aside>
             </motion.div>
 
-            <DragOverlay>
-                {activeId && (dragType === 'event'
-                    ? <EventDragOverlay eventId={activeId} events={events} />
-                    : <TaskDragOverlay taskId={activeId} tasks={tasks} />)}
-            </DragOverlay>
+            {/* Portal to body so the overlay's fixed positioning tracks the finger,
+                not an ancestor scroll/transform containing block. */}
+            {typeof document !== 'undefined' && createPortal(
+                <DragOverlay>
+                    {activeId && (dragType === 'event'
+                        ? <EventDragOverlay eventId={activeId} events={events} />
+                        : <TaskDragOverlay taskId={activeId} tasks={tasks} />)}
+                </DragOverlay>,
+                document.body
+            )}
 
             <EventTimeEditor event={editingEvent} isOpen={!!editingEvent} onClose={() => setEditingEvent(null)} />
         </DndContext>

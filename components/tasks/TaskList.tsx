@@ -6,6 +6,7 @@ import { Plus, ChevronRight, RotateCcw, Check, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { TaskCard } from './TaskCard';
 import { TaskFilters } from './TaskFilters';
+import { CadenceLoader } from '@/components/ui/CadenceLoader';
 import { useTasks } from '@/lib/hooks/useTasks';
 import { useAppStore } from '@/lib/store/app';
 import { updateTaskStatus } from '@/lib/actions/tasks';
@@ -87,10 +88,7 @@ export function TaskList() {
             </AnimatePresence>
 
             {loading ? (
-                <div className="flex flex-col items-center justify-center gap-3.5 py-20 text-text-secondary">
-                    <span className="w-8 h-8 border-[3px] border-border-strong border-t-accent rounded-full animate-cad-spin" />
-                    <span className="text-sm font-medium">Loading tasks…</span>
-                </div>
+                <CadenceLoader label="Loading tasks" className="py-20" />
             ) : tasks.length === 0 ? (
                 <EmptyCreate onCreate={() => openTaskForm()} />
             ) : filteredTasks.length === 0 ? (

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls, PanInfo } from 'framer-motion';
 import { ChevronLeft, Star, Trash2 } from 'lucide-react';
 import { Note } from '@/lib/firebase/firestore';
 import { updateNote, deleteNote } from '@/lib/actions/notes';
@@ -16,11 +16,16 @@ interface NoteOverlayProps {
 
 export function NoteOverlay({ note, isOpen, onClose }: NoteOverlayProps) {
     const { content, saving, error, onContent } = useNoteDraft(note);
+    const dragControls = useDragControls();
 
     useEffect(() => {
         if (isOpen) document.body.style.overflow = 'hidden';
         return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
+
+    const handleDragEnd = (_: unknown, info: PanInfo) => {
+        if (info.offset.y > 120 || info.velocity.y > 600) onClose();
+    };
 
     return (
         <AnimatePresence>
@@ -30,11 +35,24 @@ export function NoteOverlay({ note, isOpen, onClose }: NoteOverlayProps) {
                     animate={{ y: 0 }}
                     exit={{ y: '100%' }}
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    drag="y"
+                    dragControls={dragControls}
+                    dragListener={false}
+                    dragConstraints={{ top: 0, bottom: 0 }}
+                    dragElastic={{ top: 0, bottom: 0.6 }}
+                    onDragEnd={handleDragEnd}
                     className="fixed inset-0 z-50 flex flex-col bg-bg-primary"
                 >
+                    {/* Grab handle — drag down to dismiss */}
                     <div
-                        className="shrink-0 flex items-center gap-2 px-3.5 pb-3 border-b border-border"
-                        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+                        onPointerDown={(e) => dragControls.start(e)}
+                        className="shrink-0 flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing touch-none"
+                        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
+                    >
+                        <span className="w-10 h-1.5 rounded-full bg-border-strong" />
+                    </div>
+                    <div
+                        className="shrink-0 flex items-center gap-2 px-3.5 pb-3 border-b border-border pt-1.5"
                     >
                         <button onClick={onClose} className="flex items-center gap-1 py-2 pr-2 text-accent text-base font-semibold">
                             <ChevronLeft className="w-[22px] h-[22px]" strokeWidth={2.2} /> Notes
