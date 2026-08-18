@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import {
     Circle, Play, Pause, Check, Clock, Target, Star,
     MoreVertical, Trash2, RotateCcw, Pencil,
@@ -26,7 +26,7 @@ const statusConfig = {
 export function TaskCard({ task }: TaskCardProps) {
     const config = statusConfig[task.status];
     const Icon = config.Icon;
-    const { openStatusModal, openTaskForm, contextMenuTaskId, openContextMenu, closeContextMenu, openDeleteConfirm } = useAppStore();
+    const { openStatusModal, openTaskForm, contextMenuTaskId, openContextMenu, closeContextMenu, openDeleteConfirm, triggerConfetti } = useAppStore();
     const menuRef = useRef<HTMLDivElement>(null);
     const isMenuOpen = contextMenuTaskId === task.id;
     const isDone = task.status === 'done';
@@ -45,7 +45,25 @@ export function TaskCard({ task }: TaskCardProps) {
         };
     }, [isMenuOpen, closeContextMenu]);
 
+    // Swipe: right = complete, left = delete. Guards the tap so a swipe doesn't also toggle status.
+    const SWIPE_THRESHOLD = 110;
+    const x = useMotionValue(0);
+    const completeOpacity = useTransform(x, [0, SWIPE_THRESHOLD], [0, 1]);
+    const deleteOpacity = useTransform(x, [-SWIPE_THRESHOLD, 0], [1, 0]);
+    const swipedRef = useRef(false);
+
+    const handleSwipeEnd = (_: unknown, info: PanInfo) => {
+        if (Math.abs(info.offset.x) > 12) swipedRef.current = true;
+        if (info.offset.x > SWIPE_THRESHOLD && !isDone) {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
+            updateTaskStatus(task.id, 'done').then(() => triggerConfetti());
+        } else if (info.offset.x < -SWIPE_THRESHOLD) {
+            openDeleteConfirm(task.id);
+        }
+    };
+
     const handleCardClick = async () => {
+        if (swipedRef.current) { swipedRef.current = false; return; }
         if (isDone || isMenuOpen) return;
         const next = getNextStatus(task.status);
         if (!next) return;
@@ -103,17 +121,37 @@ export function TaskCard({ task }: TaskCardProps) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97 }}
-            onClick={handleCardClick}
-            className={cn(
-                'group relative flex items-start gap-3 p-4 pl-5 rounded-lg cursor-pointer',
-                'bg-bg-primary border border-border shadow-elev-1',
-                'transition-shadow duration-200 hover:shadow-elev-2',
-                isStarted && 'ring-1 ring-[color-mix(in_srgb,var(--started)_45%,transparent)]',
-                isDone && 'opacity-60',
-                task.priority && !isDone && 'ring-1 ring-[color-mix(in_srgb,var(--priority)_50%,transparent)]',
-                isMenuOpen && 'z-20'
-            )}
+            className={cn('relative', isMenuOpen && 'z-20')}
         >
+            {/* Swipe backdrops */}
+            {!isDone && (
+                <motion.div style={{ opacity: completeOpacity }} className="absolute inset-0 rounded-lg bg-done flex items-center justify-start pl-5 gap-2 pointer-events-none">
+                    <Check className="w-5 h-5 text-white" strokeWidth={2.6} />
+                    <span className="text-sm font-bold text-white">Complete</span>
+                </motion.div>
+            )}
+            <motion.div style={{ opacity: deleteOpacity }} className="absolute inset-0 rounded-lg bg-danger flex items-center justify-end pr-5 gap-2 pointer-events-none">
+                <span className="text-sm font-bold text-white">Delete</span>
+                <Trash2 className="w-5 h-5 text-white" />
+            </motion.div>
+
+            <motion.div
+                drag="x"
+                style={{ x }}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={isDone ? { left: 0.7, right: 0 } : 0.7}
+                onDragStart={() => { if (isMenuOpen) closeContextMenu(); }}
+                onDragEnd={handleSwipeEnd}
+                onClick={handleCardClick}
+                className={cn(
+                    'group relative flex items-start gap-3 p-4 pl-5 rounded-lg cursor-pointer touch-pan-y',
+                    'bg-bg-primary border border-border shadow-elev-1',
+                    'transition-shadow duration-200 hover:shadow-elev-2',
+                    isStarted && 'ring-1 ring-[color-mix(in_srgb,var(--started)_45%,transparent)]',
+                    isDone && 'opacity-60',
+                    task.priority && !isDone && 'ring-1 ring-[color-mix(in_srgb,var(--priority)_50%,transparent)]'
+                )}
+            >
             {/* Status stripe */}
             <span
                 className="absolute left-0 top-3 bottom-3 w-1 rounded-full"
@@ -218,6 +256,7 @@ export function TaskCard({ task }: TaskCardProps) {
                     )}
                 </AnimatePresence>
             </div>
+            </motion.div>
         </motion.div>
     );
 }

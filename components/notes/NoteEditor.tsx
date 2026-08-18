@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, PenLine } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Plus, PenLine, Undo2 } from 'lucide-react';
+import { CadenceLoader } from '@/components/ui/CadenceLoader';
 import { NoteCard } from './NoteCard';
 import { NoteDetail } from './NoteDetail';
 import { NoteOverlay } from './NoteOverlay';
 import { GoalsTile } from '@/components/goals/GoalsTile';
 import { useNotes } from '@/lib/hooks/useNotes';
-import { createNote } from '@/lib/actions/notes';
+import { createNote, deleteNote } from '@/lib/actions/notes';
 import { useAppStore } from '@/lib/store/app';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 
@@ -17,17 +18,56 @@ export function NoteEditor() {
     const { noteComposeNonce } = useAppStore();
     const isRail = useMediaQuery('(min-width: 768px)');
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
     const lastNonce = useRef(noteComposeNonce);
+    const deleteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const pendingRef = useRef<string | null>(null);
 
     const sortedNotes = useMemo(() => {
-        return [...notes].sort((a, b) => {
-            if (a.priority && !b.priority) return -1;
-            if (!a.priority && b.priority) return 1;
-            return (b.updatedAt?.toMillis?.() || 0) - (a.updatedAt?.toMillis?.() || 0);
-        });
-    }, [notes]);
+        return [...notes]
+            .filter((n) => n.id !== pendingDeleteId)
+            .sort((a, b) => {
+                if (a.priority && !b.priority) return -1;
+                if (!a.priority && b.priority) return 1;
+                return (b.updatedAt?.toMillis?.() || 0) - (a.updatedAt?.toMillis?.() || 0);
+            });
+    }, [notes, pendingDeleteId]);
 
     const selectedNote = selectedId ? notes.find((n) => n.id === selectedId) || null : null;
+
+    const setPending = (id: string | null) => { pendingRef.current = id; setPendingDeleteId(id); };
+
+    // Commit any pending delete immediately (e.g. before starting a new one or on unmount).
+    const flushDelete = () => {
+        if (deleteTimer.current) { clearTimeout(deleteTimer.current); deleteTimer.current = null; }
+        const id = pendingRef.current;
+        if (id) deleteNote(id).catch((e) => console.error('Failed to delete note:', e));
+        setPending(null);
+    };
+
+    const requestDelete = (id: string) => {
+        flushDelete();
+        if (selectedId === id) setSelectedId(null);
+        setPending(id);
+        deleteTimer.current = setTimeout(() => {
+            deleteNote(id).catch((e) => console.error('Failed to delete note:', e));
+            deleteTimer.current = null;
+            setPending(null);
+        }, 5000);
+    };
+
+    const undoDelete = () => {
+        if (deleteTimer.current) { clearTimeout(deleteTimer.current); deleteTimer.current = null; }
+        setPending(null);
+    };
+
+    // On unmount, commit the pending delete so the user's intent isn't silently dropped.
+    useEffect(() => () => {
+        if (deleteTimer.current) {
+            clearTimeout(deleteTimer.current);
+            if (pendingRef.current) deleteNote(pendingRef.current).catch(() => {});
+        }
+    }, []);
 
     const handleCapture = async () => {
         try {
@@ -48,10 +88,7 @@ export function NoteEditor() {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center gap-3.5 py-16 text-text-secondary">
-                <span className="w-8 h-8 border-[3px] border-border-strong border-t-accent rounded-full animate-cad-spin" />
-                <span className="text-sm font-medium">Loading notes…</span>
-            </div>
+            <CadenceLoader label="Loading notes" className="py-16" />
         );
     }
 
@@ -94,7 +131,8 @@ export function NoteEditor() {
                                     key={note.id}
                                     note={note}
                                     selected={isRail && note.id === selectedId}
-                                    onClick={() => setSelectedId(note.id)}
+                                    onOpen={() => setSelectedId(note.id)}
+                                    onRequestDelete={() => requestDelete(note.id)}
                                 />
                             ))}
                         </AnimatePresence>
@@ -113,6 +151,28 @@ export function NoteEditor() {
             {!isRail && (
                 <NoteOverlay note={selectedNote} isOpen={!!selectedNote} onClose={() => setSelectedId(null)} />
             )}
+
+            {/* Undo-delete toast */}
+            <AnimatePresence>
+                {pendingDeleteId && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        transition={{ duration: 0.25 }}
+                        className="fixed left-3 right-3 md:left-auto md:right-8 md:w-[320px] z-50 flex items-center gap-3 p-3.5 rounded-lg glass shadow-elev-3"
+                        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }}
+                    >
+                        <span className="flex-1 text-sm font-semibold text-text-primary">Note deleted</span>
+                        <button
+                            onClick={undoDelete}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-[10px] bg-accent text-on-accent text-sm font-semibold active:scale-95 transition-transform"
+                        >
+                            <Undo2 className="w-4 h-4" /> Undo
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

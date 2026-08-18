@@ -8,8 +8,8 @@ import { RailTopbar } from '@/components/layout/RailTopbar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { InstallPrompt } from '@/components/ui/InstallPrompt';
 import { Confetti } from '@/components/ui/Confetti';
+import { CadenceLoader } from '@/components/ui/CadenceLoader';
 import { useUser } from '@/lib/firebase/auth';
-import { Loader2 } from 'lucide-react';
 
 export default function AppLayout({
     children,
@@ -27,9 +27,8 @@ export default function AppLayout({
 
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: 'var(--app-bg)' }}>
-                <Loader2 className="w-8 h-8 animate-spin text-accent" />
-                <span className="mt-4 text-sm font-medium text-text-secondary animate-pulse">Loading Cadence…</span>
+            <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
+                <CadenceLoader label="Loading Cadence" />
             </div>
         );
     }
