@@ -1,47 +1,44 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
-import { CadenceMark } from '@/components/auth/AuthBits';
+import { cn } from '@/lib/utils/cn';
 
 interface CadenceLoaderProps {
     label?: string;
     className?: string;
 }
 
-// Branded loading state: the Cadence mark with pulsing concentric rings.
+/** Loading state: solid Cadence clock with a sweeping hand. */
 export function CadenceLoader({ label, className }: CadenceLoaderProps) {
     return (
-        <div className={`flex flex-col items-center justify-center gap-5 ${className ?? ''}`}>
-            <div className="relative flex items-center justify-center">
-                {[0, 0.6].map((delay) => (
-                    <motion.span
-                        key={delay}
-                        className="absolute rounded-4xl border border-accent"
-                        style={{ width: 60, height: 60 }}
-                        initial={{ opacity: 0.5, scale: 1 }}
-                        animate={{ opacity: 0, scale: 1.9 }}
-                        transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut', delay }}
-                    />
-                ))}
-                <motion.div
-                    animate={{ scale: [1, 1.06, 1] }}
-                    transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+        <div
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+            aria-label={label ?? 'Loading'}
+            className={cn('flex flex-col items-center justify-center gap-4', className)}
+        >
+            <span className="w-[60px] h-[60px] rounded-4xl flex items-center justify-center bg-accent text-on-accent">
+                <svg
+                    width="30"
+                    height="30"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
                 >
-                    <CadenceMark />
-                </motion.div>
-            </div>
+                    <path d="M4 13a8 8 0 108-9" />
+                    <path d="M12 8v4" />
+                    <g className="animate-cad-hand" style={{ transformOrigin: '12px 12px', transformBox: 'view-box' }}>
+                        <path d="M12 12l3.2 2" />
+                    </g>
+                </svg>
+            </span>
             {label && (
-                <div className="flex items-center gap-1.5 text-sm font-medium text-text-secondary">
-                    {label}
-                    <motion.span
-                        aria-hidden
-                        animate={{ opacity: [0.3, 1, 0.3] }}
-                        transition={{ duration: 1.4, repeat: Infinity }}
-                    >
-                        …
-                    </motion.span>
-                </div>
+                <p className="text-sm font-medium text-text-secondary">{label}</p>
             )}
         </div>
     );

@@ -98,7 +98,7 @@ const config: Config = {
                 'cad-pop': 'cad-pop .16s var(--ease) both',
                 'cad-glow': 'cad-glow 1.6s ease-in-out infinite',
                 'cad-live': 'cad-live 1.4s ease-in-out infinite',
-                'cad-shimmer': 'cad-shimmer 1.5s var(--ease) infinite',
+                'cad-hand': 'cad-spin 2.8s linear infinite',
             },
             keyframes: {
                 'pulse-soft': {

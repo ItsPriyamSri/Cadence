@@ -205,8 +205,8 @@ export function TaskCard({ task }: TaskCardProps) {
                 )}
 
                 {isStarted && (
-                    <div className="relative h-[3px] mt-2.5 rounded-full bg-started-bg overflow-hidden">
-                        <span className="absolute inset-y-0 w-2/5 rounded-full animate-cad-shimmer bg-[linear-gradient(90deg,transparent,var(--started),transparent)]" />
+                    <div className="h-[3px] mt-2.5 rounded-full bg-started-bg overflow-hidden">
+                        <span className="block h-full w-full rounded-full bg-started animate-cad-glow" />
                     </div>
                 )}
             </div>

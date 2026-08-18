@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sun, Moon, LogOut } from 'lucide-react';
 import { useUser, signOut } from '@/lib/firebase/auth';
 import { useAppStore } from '@/lib/store/app';
+import { CadenceMark } from '@/components/auth/AuthBits';
 
 export function Header() {
     const { user } = useUser();
@@ -35,9 +36,7 @@ export function Header() {
             style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
         >
             <Link href="/tasks" className="flex items-center gap-2.5">
-                <span className="w-8 h-8 rounded-[10px] flex items-center justify-center shadow-[0_4px_12px_var(--accent-glow)] bg-[linear-gradient(140deg,var(--accent),color-mix(in_srgb,var(--accent)_55%,#7c5cff))]">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--on-accent)" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 13a8 8 0 108-9" /><path d="M12 8v4l3 2" /></svg>
-                </span>
+                <CadenceMark className="w-8 h-8 rounded-[10px]" />
                 <span className="text-[19px] font-bold tracking-tight text-text-primary">Cadence</span>
             </Link>
 
@@ -55,7 +54,7 @@ export function Header() {
                 <button
                     onClick={() => setMenuOpen((o) => !o)}
                     aria-label="Account"
-                    className="w-10 h-10 shrink-0 rounded-full text-white font-bold text-[15px] bg-[linear-gradient(140deg,var(--accent),var(--secondary))]"
+                    className="w-10 h-10 shrink-0 rounded-full bg-accent text-on-accent font-bold text-[15px]"
                 >
                     {initial}
                 </button>
@@ -69,7 +68,7 @@ export function Header() {
                             className="absolute right-0 top-12 z-30 min-w-[220px] p-2 rounded-md bg-bg-primary border border-border shadow-elev-4"
                         >
                             <div className="flex items-center gap-3 p-2.5">
-                                <span className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-[linear-gradient(140deg,var(--accent),var(--secondary))]">
+                                <span className="w-10 h-10 rounded-full flex items-center justify-center bg-accent text-on-accent font-bold">
                                     {initial}
                                 </span>
                                 <div className="min-w-0">

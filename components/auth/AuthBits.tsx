@@ -1,11 +1,15 @@
 import React from 'react';
+import { cn } from '@/lib/utils/cn';
 
-export function CadenceMark() {
+export function CadenceMark({ className }: { className?: string }) {
     return (
         <span
-            className="w-[60px] h-[60px] rounded-4xl flex items-center justify-center shadow-[0_12px_30px_var(--accent-glow)] bg-[linear-gradient(140deg,var(--accent),color-mix(in_srgb,var(--accent)_55%,#7c5cff))]"
+            className={cn(
+                'w-[60px] h-[60px] rounded-4xl flex items-center justify-center bg-accent text-on-accent',
+                className
+            )}
         >
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--on-accent)" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-1/2 h-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M4 13a8 8 0 108-9" /><path d="M12 8v4l3 2" />
             </svg>
         </span>
