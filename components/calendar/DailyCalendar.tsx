@@ -248,7 +248,7 @@ export function DailyCalendar() {
             {/* Portal to body so the overlay's fixed positioning tracks the finger,
                 not an ancestor scroll/transform containing block. */}
             {typeof document !== 'undefined' && createPortal(
-                <DragOverlay modifiers={[snapCenterToCursor]} dropAnimation={null}>
+                <DragOverlay modifiers={[snapCenterToCursor]} dropAnimation={null} style={{ width: 'auto', height: 'auto' }}>
                     {activeId && (dragType === 'event'
                         ? <EventDragOverlay eventId={activeId} events={events} />
                         : <TaskDragOverlay taskId={activeId} tasks={tasks} />)}
@@ -322,11 +322,20 @@ function DraggableTask({ task, wrap }: { task: Task; wrap?: boolean }) {
 function TaskDragOverlay({ taskId, tasks }: { taskId: string; tasks: Task[] }) {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return null;
-    return <div className="px-4 py-2.5 rounded-xl bg-accent text-on-accent shadow-elev-3 text-sm font-semibold">{task.title}</div>;
+    return (
+        <div className="w-max max-w-[220px] flex items-center px-3.5 py-2.5 rounded-xl bg-accent text-on-accent shadow-elev-3 text-sm font-semibold">
+            <span className="truncate">{task.title}</span>
+        </div>
+    );
 }
 
 function EventDragOverlay({ eventId, events }: { eventId: string; events: CalendarEventType[] }) {
     const event = events.find((e) => e.id === eventId);
     if (!event) return null;
-    return <div className="px-4 py-2.5 rounded-xl bg-accent text-on-accent shadow-elev-3 text-sm font-semibold">📅 {event.title}</div>;
+    return (
+        <div className="w-max max-w-[220px] flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-accent text-on-accent shadow-elev-3 text-sm font-semibold">
+            <span className="shrink-0">📅</span>
+            <span className="truncate">{event.title}</span>
+        </div>
+    );
 }
