@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import {
     DndContext, DragOverlay, useSensor, useSensors, PointerSensor, TouchSensor,
-    DragStartEvent, DragEndEvent, useDraggable, useDroppable, Modifier,
+    DragStartEvent, DragEndEvent, useDraggable, useDroppable, Modifier, pointerWithin,
 } from '@dnd-kit/core';
 import { getEventCoordinates } from '@dnd-kit/utilities';
 import { ChevronLeft, ChevronRight, GripVertical, Move } from 'lucide-react';
@@ -160,7 +160,7 @@ export function DailyCalendar() {
     }
 
     return (
-        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
