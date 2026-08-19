@@ -5,8 +5,9 @@ import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import {
     DndContext, DragOverlay, useSensor, useSensors, PointerSensor, TouchSensor,
-    DragStartEvent, DragEndEvent, useDraggable, useDroppable,
+    DragStartEvent, DragEndEvent, useDraggable, useDroppable, Modifier,
 } from '@dnd-kit/core';
+import { getEventCoordinates } from '@dnd-kit/utilities';
 import { ChevronLeft, ChevronRight, GripVertical, Move } from 'lucide-react';
 import { CadenceLoader } from '@/components/ui/CadenceLoader';
 import { ActiveTaskBanner } from './ActiveTaskBanner';
@@ -22,6 +23,19 @@ import { cn } from '@/lib/utils/cn';
 import { format } from 'date-fns';
 
 const HOUR_HEIGHT = 72;
+
+// Center the drag preview on the pointer/finger from the first frame, instead of
+// starting at the grabbed element's origin and only tracking movement delta.
+const snapCenterToCursor: Modifier = ({ activatorEvent, draggingNodeRect, transform }) => {
+    if (!draggingNodeRect || !activatorEvent) return transform;
+    const coords = getEventCoordinates(activatorEvent);
+    if (!coords) return transform;
+    return {
+        ...transform,
+        x: transform.x + coords.x - draggingNodeRect.left - draggingNodeRect.width / 2,
+        y: transform.y + coords.y - draggingNodeRect.top - draggingNodeRect.height / 2,
+    };
+};
 
 function CurrentTimeIndicator({ startHour }: { startHour: number }) {
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -234,7 +248,7 @@ export function DailyCalendar() {
             {/* Portal to body so the overlay's fixed positioning tracks the finger,
                 not an ancestor scroll/transform containing block. */}
             {typeof document !== 'undefined' && createPortal(
-                <DragOverlay>
+                <DragOverlay modifiers={[snapCenterToCursor]} dropAnimation={null}>
                     {activeId && (dragType === 'event'
                         ? <EventDragOverlay eventId={activeId} events={events} />
                         : <TaskDragOverlay taskId={activeId} tasks={tasks} />)}
