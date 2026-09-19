@@ -6,6 +6,7 @@ import { Plus, ChevronRight, RotateCcw, Check, Search } from 'lucide-react';
 import { TaskCard } from './TaskCard';
 import { TaskFilters } from './TaskFilters';
 import { TodayRecap } from './TodayRecap';
+import { FocusPill } from '@/components/focus/FocusPill';
 import { CadenceLoader } from '@/components/ui/CadenceLoader';
 import { useTasks } from '@/lib/hooks/useTasks';
 import { useAppStore } from '@/lib/store/app';
@@ -93,23 +94,8 @@ export function TaskList() {
         <div className="space-y-4">
             <TaskFilters />
 
-            {/* In-progress banner */}
-            <AnimatePresence>
-                {startedCount > 0 && taskFilter === 'all' && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="flex items-center gap-3 px-4 py-3 rounded-md bg-started-bg border border-[color-mix(in_srgb,var(--started)_30%,transparent)]"
-                    >
-                        <span className="w-2.5 h-2.5 rounded-full bg-started shadow-[0_0_8px_var(--started)] animate-cad-live shrink-0" />
-                        <span className="text-sm font-semibold text-text-primary">
-                            {startedCount} task{startedCount > 1 ? 's' : ''} in progress
-                        </span>
-                        <span className="text-sm text-text-secondary hidden sm:inline">Keep the momentum going</span>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* In-progress focus pill */}
+            <FocusPill />
 
             {loading ? (
                 <CadenceLoader label="Loading tasks" className="py-20" />

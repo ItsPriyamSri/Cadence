@@ -8,6 +8,7 @@ import { RailTopbar } from '@/components/layout/RailTopbar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { InstallPrompt } from '@/components/ui/InstallPrompt';
 import { Confetti } from '@/components/ui/Confetti';
+import { FocusOverlay } from '@/components/focus/FocusOverlay';
 import { CadenceLoader } from '@/components/ui/CadenceLoader';
 import { useUser } from '@/lib/firebase/auth';
 import { useTasks } from '@/lib/hooks/useTasks';
@@ -77,6 +78,7 @@ export default function AppLayout({
 
             <InstallPrompt />
             <Confetti />
+            <FocusOverlay />
         </div>
     );
 }

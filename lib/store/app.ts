@@ -63,6 +63,11 @@ interface AppState {
     showConfetti: boolean;
     triggerConfetti: () => void;
 
+    // Focus overlay state
+    focusOpen: boolean;
+    openFocus: () => void;
+    closeFocus: () => void;
+
     // Shell -> Notes page signal to compose a new note ("Capture a Thought")
     noteComposeNonce: number;
     requestNoteCompose: () => void;
@@ -174,6 +179,11 @@ export const useAppStore = create<AppState>()(
                 set({ showConfetti: true });
                 setTimeout(() => set({ showConfetti: false }), 3000);
             },
+
+            // Focus overlay
+            focusOpen: false,
+            openFocus: () => set({ focusOpen: true }),
+            closeFocus: () => set({ focusOpen: false }),
 
             // Note compose signal
             noteComposeNonce: 0,
