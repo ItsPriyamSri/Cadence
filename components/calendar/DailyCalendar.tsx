@@ -91,8 +91,8 @@ export function DailyCalendar() {
     useEffect(() => { setHasScrolled(false); }, [dateKey]);
 
     const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-        useSensor(TouchSensor, { activationConstraint: { distance: 12 } })
+        useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 160, tolerance: 8 } })
     );
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -217,10 +217,10 @@ export function DailyCalendar() {
                     <div className="md:hidden shrink-0 pt-3 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                             <Move className="w-[15px] h-[15px] text-text-tertiary" />
-                            <span className="text-xs font-bold tracking-[0.04em] uppercase text-text-tertiary">Drag to schedule</span>
+                            <span className="text-xs font-bold tracking-[0.04em] uppercase text-text-tertiary">Swipe the row · drag the grip</span>
                         </div>
                         {unscheduledTasks.length > 0 ? (
-                            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1 min-w-0 touch-pan-x">
+                            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1 min-w-0 touch-pan-x overscroll-x-contain">
                                 {unscheduledTasks.map((task) => <DraggableTask key={task.id} task={task} />)}
                             </div>
                         ) : (
@@ -304,17 +304,22 @@ function DraggableTask({ task, wrap }: { task: Task; wrap?: boolean }) {
     return (
         <div
             ref={setNodeRef}
-            {...listeners}
-            {...attributes}
-            style={{ touchAction: 'none' }}
             className={cn(
-                'select-none flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-primary border border-border shadow-elev-1 shrink-0',
-                'cursor-grab active:cursor-grabbing hover:shadow-elev-2 hover:-translate-y-px transition',
+                'select-none flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-bg-primary border border-border shadow-elev-1 shrink-0',
+                'transition-shadow',
                 isDragging && 'opacity-50'
             )}
         >
-            <GripVertical className="w-3 h-3 text-text-tertiary shrink-0" />
-            <span className={cn('text-sm font-semibold text-text-primary', wrap ? 'leading-snug' : 'truncate max-w-[120px]')}>
+            <button
+                type="button"
+                aria-label={`Drag ${task.title} onto the calendar`}
+                className="shrink-0 p-1 -ml-0.5 rounded-md text-text-tertiary touch-none cursor-grab active:cursor-grabbing active:text-accent"
+                {...listeners}
+                {...attributes}
+            >
+                <GripVertical className="w-4 h-4" />
+            </button>
+            <span className={cn('text-sm font-semibold text-text-primary pointer-events-none', wrap ? 'leading-snug' : 'truncate max-w-[120px]')}>
                 {task.title}
             </span>
         </div>

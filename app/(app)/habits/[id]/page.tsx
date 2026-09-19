@@ -9,12 +9,12 @@ import { useHabits } from '@/lib/hooks/useHabits';
 import { useAppStore } from '@/lib/store/app';
 import { fadeIn } from '@/lib/utils/animations';
 import { CadenceLoader } from '@/components/ui/CadenceLoader';
-import { ContributionGraph } from '@/components/habits/ContributionGraph';
+import { ContributionGraph, rollingDays, GRAPH_DAYS } from '@/components/habits/ContributionGraph';
 import { HabitMonthCalendar } from '@/components/habits/HabitMonthCalendar';
 import { HabitForm } from '@/components/habits/HabitForm';
 import { Modal } from '@/components/ui/Modal';
-import { currentStreak, bestStreak, parseDateKey } from '@/lib/habits/logic';
-import { formatDateKey, subDays, addDays } from '@/lib/utils/dates';
+import { currentStreak, bestStreak } from '@/lib/habits/logic';
+import { formatDateKey } from '@/lib/utils/dates';
 
 export default function HabitDetailPage() {
     const params = useParams();
@@ -31,38 +31,10 @@ export default function HabitDetailPage() {
         }
 
         const startedOn = habit.habitStartedOn || todayKey;
-        const cur = currentStreak(habit.repeat, startedOn, habit.checkIns, todayKey);
-        const max = bestStreak(habit.repeat, startedOn, habit.checkIns, todayKey);
-
-        // Calculate days from habitStartedOn through todayKey
-        const start = parseDateKey(startedOn);
-        const today = parseDateKey(todayKey);
-
-        const days: string[] = [];
-        let cursor = start;
-        while (cursor <= today) {
-            days.push(formatDateKey(cursor));
-            cursor = addDays(cursor, 1);
-        }
-
-        // If span is shorter than 35 days, pad leading days to maintain 35-day density
-        if (days.length < 35) {
-            const padNeeded = 35 - days.length;
-            const paddedDays: string[] = [];
-            for (let i = padNeeded; i >= 1; i--) {
-                paddedDays.push(formatDateKey(subDays(start, i)));
-            }
-            return {
-                curStreak: cur,
-                maxStreak: max,
-                historyDays: [...paddedDays, ...days],
-            };
-        }
-
         return {
-            curStreak: cur,
-            maxStreak: max,
-            historyDays: days,
+            curStreak: currentStreak(habit.repeat, startedOn, habit.checkIns, todayKey),
+            maxStreak: bestStreak(habit.repeat, startedOn, habit.checkIns, todayKey),
+            historyDays: rollingDays(todayKey, GRAPH_DAYS),
         };
     }, [habit, todayKey]);
 
@@ -149,14 +121,11 @@ export default function HabitDetailPage() {
             {/* History Contribution Graph */}
             <div className="p-5 rounded-lg bg-bg-primary border border-border shadow-elev-1 space-y-3">
                 <div className="text-sm font-bold text-text-primary">Activity History</div>
-                <div className="overflow-x-auto scrollbar-hide pt-1">
-                    <ContributionGraph
-                        color={habitColor}
-                        checkIns={habit.checkIns}
-                        days={historyDays}
-                        cell={12}
-                    />
-                </div>
+                <ContributionGraph
+                    color={habitColor}
+                    checkIns={habit.checkIns}
+                    days={historyDays}
+                />
             </div>
 
             {/* Month Calendar */}

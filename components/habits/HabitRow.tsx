@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Check, Repeat } from 'lucide-react';
 import { Task, RepeatRule } from '@/lib/firebase/firestore';
-import { ContributionGraph, rollingDays } from './ContributionGraph';
+import { ContributionGraph, rollingDays, GRAPH_DAYS } from './ContributionGraph';
 import { IntensityChooser } from './IntensityChooser';
 import { formatDateKey } from '@/lib/utils/dates';
 import { cn } from '@/lib/utils/cn';
@@ -54,7 +54,7 @@ export function HabitRow({ habit, todayKey: propTodayKey }: HabitRowProps) {
     const isDueOrOverdueUnfinished =
         habit.dueDate !== null && habit.dueDate <= todayKey && !checkInLevel;
 
-    const days = rollingDays(todayKey, 35);
+    const days = rollingDays(todayKey, GRAPH_DAYS);
     const dueHint = getDueHint(habit, todayKey);
 
     const handleRowClick = () => {
@@ -142,12 +142,11 @@ export function HabitRow({ habit, todayKey: propTodayKey }: HabitRowProps) {
                 </div>
 
                 {/* Rolling contribution graph */}
-                <div className="pt-1 overflow-x-auto scrollbar-hide">
+                <div className="pt-1">
                     <ContributionGraph
                         color={habitColor}
                         checkIns={habit.checkIns}
                         days={days}
-                        cell={9}
                     />
                 </div>
             </motion.div>
