@@ -66,6 +66,7 @@ interface CreateEventInput {
     endTime: string;
     taskId?: string | null;
     color?: string;
+    boundWeekly?: boolean;
 }
 
 function generateTempId(): string {
@@ -88,6 +89,7 @@ export async function createCalendarEvent(input: CreateEventInput): Promise<stri
         endTime: input.endTime,
         status: 'scheduled',
         color: input.color || '#3a86ff',
+        boundWeekly: input.boundWeekly ?? false,
     };
 
     useCalendarStore.getState().addEvent(optimisticEvent);
@@ -106,6 +108,7 @@ export async function createCalendarEvent(input: CreateEventInput): Promise<stri
             endTime: input.endTime,
             status: 'scheduled',
             color: input.color || '#3a86ff',
+            boundWeekly: input.boundWeekly ?? false,
         });
 
         useCalendarStore.getState().updateEvent(tempId, { id: eventRef.id } as any);
@@ -176,6 +179,7 @@ export async function handleTaskDropOnCalendar(
         endTime,
         status: eventStatus,
         color: '#3a86ff',
+        boundWeekly: false,
     };
 
     useCalendarStore.getState().addEvent(optimisticEvent);
@@ -206,6 +210,7 @@ export async function handleTaskDropOnCalendar(
             endTime,
             status: eventStatus,
             color: '#3a86ff',
+            boundWeekly: false,
         });
 
         // Update with real event ID
