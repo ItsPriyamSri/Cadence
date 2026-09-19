@@ -76,6 +76,43 @@ export function setCheckIn(
     return { ...checkIns, [dateKey]: level };
 }
 
+export function clearCheckIn<T>(map: Record<string, T>, dateKey: string): Record<string, T> {
+    if (!(dateKey in map)) return map;
+    const next = { ...map };
+    delete next[dateKey];
+    return next;
+}
+
+export interface UndoTodayResult {
+    checkIns: Record<string, CheckInLevel>;
+    checkInElapsed: Record<string, number>;
+    dueDate: string | null;
+    unroll: boolean;
+}
+
+/** Clear today's check-in. Un-roll only when today is due and dueDate is the next grid day after today. */
+export function undoTodayCheckIn(
+    task: Pick<Task, 'repeat' | 'habitStartedOn' | 'checkIns' | 'checkInElapsed' | 'dueDate'>,
+    todayKey: string,
+): UndoTodayResult | null {
+    if (task.checkIns[todayKey] === undefined) return null;
+
+    const unroll = Boolean(
+        task.repeat &&
+            task.habitStartedOn &&
+            task.dueDate &&
+            isDueOn(task.repeat, todayKey, task.habitStartedOn) &&
+            task.dueDate === nextDueDate(task.repeat, todayKey, task.habitStartedOn),
+    );
+
+    return {
+        checkIns: clearCheckIn(task.checkIns, todayKey),
+        checkInElapsed: clearCheckIn(task.checkInElapsed, todayKey),
+        dueDate: unroll ? todayKey : task.dueDate,
+        unroll,
+    };
+}
+
 /** Last due day <= dateKey, or null if none exists on/after habitStartedOn. */
 function lastDueOnOrBefore(rule: RepeatRule, dateKey: string, habitStartedOn: string): string | null {
     if (dateKey < habitStartedOn) return null;

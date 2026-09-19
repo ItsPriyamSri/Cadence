@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Task, CheckInLevel } from '@/lib/firebase/firestore';
-import { completeHabit, setCheckInLevel } from '@/lib/actions/habits';
+import { completeHabit, setCheckInLevel, undoTodayCheckIn } from '@/lib/actions/habits';
 import { formatDateKey } from '@/lib/utils/dates';
 import { useAppStore } from '@/lib/store/app';
 import { Check, Sparkles } from 'lucide-react';
@@ -44,6 +44,18 @@ export function IntensityChooser({
             onClose();
         } catch (error) {
             console.error('Failed to log habit intensity:', error);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleClear = async () => {
+        setSubmitting(true);
+        try {
+            await undoTodayCheckIn(habit.id);
+            onClose();
+        } catch (error) {
+            console.error('Failed to undo today’s check-in:', error);
         } finally {
             setSubmitting(false);
         }
@@ -112,6 +124,17 @@ export function IntensityChooser({
                         Full
                     </button>
                 </div>
+
+                {currentLevel && (
+                    <button
+                        type="button"
+                        disabled={submitting}
+                        onClick={handleClear}
+                        className="w-full min-h-[44px] py-2.5 rounded-md text-sm font-semibold text-text-secondary hover:text-danger hover:bg-danger-bg transition-colors disabled:opacity-60"
+                    >
+                        Clear today
+                    </button>
+                )}
             </div>
         </Modal>
     );

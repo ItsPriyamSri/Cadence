@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { TaskList } from '@/components/tasks/TaskList';
 import { TaskForm } from '@/components/tasks/TaskForm';
 import { StatusModal } from '@/components/tasks/StatusModal';
-import { DeleteTaskModal } from '@/components/tasks/DeleteTaskModal';
 import { Modal } from '@/components/ui/Modal';
 import { useAppStore } from '@/lib/store/app';
 import { useTasks } from '@/lib/hooks/useTasks';
@@ -31,7 +30,6 @@ export default function TasksPage() {
             </Modal>
 
             <StatusModal />
-            <DeleteTaskModal />
         </motion.div>
     );
 }

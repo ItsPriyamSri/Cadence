@@ -8,6 +8,7 @@ import {
     addDoc,
     updateDoc,
     deleteDoc,
+    deleteField,
     getDocs,
     getDoc,
     serverTimestamp,
@@ -66,7 +67,7 @@ export interface Task {
     color: string | null; // hex from HABIT_PALETTE
     sameTimeWeekly: boolean; // project this week's due days onto the calendar
     lockedTime: LockedTime | null; // clock used by the weekly series
-    checkIns: Record<string, CheckInLevel>; // date -> intensity; never wiped
+    checkIns: Record<string, CheckInLevel>; // date -> intensity; user undo may drop today's key
     checkInElapsed: Record<string, number>; // date -> ms snapped on complete
     elapsedMs: number; // accumulated focus time for the current occurrence
     dueDate: string | null; // yyyy-MM-dd next/current due; null if one-off
@@ -168,6 +169,7 @@ export {
     addDoc,
     updateDoc,
     deleteDoc,
+    deleteField,
     getDocs,
     getDoc,
     serverTimestamp,

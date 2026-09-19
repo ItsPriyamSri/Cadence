@@ -11,6 +11,8 @@ import {
     todayRecapItems,
     weekStartKey,
     repeatRulesEqual,
+    clearCheckIn,
+    undoTodayCheckIn,
 } from './logic';
 
 assert.equal(repeatRulesEqual({ kind: 'daily' }, { kind: 'daily' }), true);
@@ -65,5 +67,35 @@ const recap = todayRecapItems([
 ], '2026-09-19', 4000);
 assert.equal(recap.some((r) => r.taskId === 'h1' && r.kind === 'habit' && r.elapsedMs === 8_000), true);
 assert.equal(recap.some((r) => r.taskId === 'o1' && r.inProgress), true);
+
+assert.deepEqual(clearCheckIn({ '2026-09-18': 2, '2026-09-19': 1 }, '2026-09-19'), { '2026-09-18': 2 });
+assert.deepEqual(clearCheckIn({ '2026-09-18': 2 }, '2026-09-19'), { '2026-09-18': 2 });
+
+const rolledTask = {
+    repeat: daily,
+    habitStartedOn: '2026-09-01',
+    checkIns: { '2026-09-19': 2 as const },
+    checkInElapsed: { '2026-09-19': 8_000 },
+    dueDate: '2026-09-20',
+};
+const undone = undoTodayCheckIn(rolledTask, '2026-09-19');
+assert.equal(undone?.unroll, true);
+assert.equal(undone?.dueDate, '2026-09-19');
+assert.equal(undone?.checkIns['2026-09-19'], undefined);
+assert.equal(undone?.checkInElapsed['2026-09-19'], undefined);
+
+assert.equal(undoTodayCheckIn({ ...rolledTask, checkIns: {} }, '2026-09-19'), null);
+
+const alreadyRolledMidweek = undoTodayCheckIn({
+    repeat: mwf,
+    habitStartedOn: '2026-09-01',
+    checkIns: { '2026-09-21': 2 as const, '2026-09-22': 1 as const }, // Mon full, Tue intensity-only
+    checkInElapsed: { '2026-09-21': 1 },
+    dueDate: '2026-09-23', // next after Monday
+}, '2026-09-22');
+assert.equal(alreadyRolledMidweek?.unroll, false);
+assert.equal(alreadyRolledMidweek?.dueDate, '2026-09-23');
+assert.equal(alreadyRolledMidweek?.checkIns['2026-09-22'], undefined);
+assert.equal(alreadyRolledMidweek?.checkIns['2026-09-21'], 2);
 
 console.log('logic.selfcheck OK');

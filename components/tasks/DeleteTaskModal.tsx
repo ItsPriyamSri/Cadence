@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useAppStore } from '@/lib/store/app';
@@ -11,10 +12,14 @@ export function DeleteTaskModal() {
     const { confirmDeleteTaskId, closeDeleteConfirm } = useAppStore();
     const { tasks } = useTasksStore();
     const task = tasks.find((t) => t.id === confirmDeleteTaskId);
+    const router = useRouter();
+    const pathname = usePathname();
+    const isHabit = task?.repeat != null;
 
     const handleConfirm = () => {
         if (task) deleteTask(task.id);
         closeDeleteConfirm();
+        if (pathname?.startsWith('/habits/')) router.push('/habits');
     };
 
     return (
@@ -23,9 +28,13 @@ export function DeleteTaskModal() {
                 <div className="w-14 h-14 mx-auto mb-3.5 rounded-lg bg-danger-bg text-danger flex items-center justify-center">
                     <Trash2 className="w-7 h-7" />
                 </div>
-                <h2 className="text-lg font-bold text-text-primary mb-1.5">Delete this task?</h2>
+                <h2 className="text-lg font-bold text-text-primary mb-1.5">
+                    {isHabit ? 'Delete this habit?' : 'Delete this task?'}
+                </h2>
                 <p className="text-sm text-text-secondary mb-5">
-                    &ldquo;{task?.title}&rdquo; will be permanently removed.
+                    {isHabit
+                        ? <>&ldquo;{task?.title}&rdquo; and its calendar events will be permanently removed.</>
+                        : <>&ldquo;{task?.title}&rdquo; will be permanently removed.</>}
                 </p>
                 <div className="flex gap-2.5">
                     <button
