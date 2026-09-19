@@ -1,9 +1,9 @@
 'use client';
 
-import { db, doc, updateDoc, Task, RepeatRule, CheckInLevel } from '@/lib/firebase/firestore';
+import { db, doc, updateDoc, deleteField, Task, RepeatRule, CheckInLevel } from '@/lib/firebase/firestore';
 import { useTasksStore, useCalendarStore } from '@/lib/store/optimistic';
 import { formatDateKey, addDays } from '@/lib/utils/dates';
-import { isDueOn, nextDueDate, setCheckIn, rollHabit, parseDateKey, repeatRulesEqual } from '@/lib/habits/logic';
+import { isDueOn, nextDueDate, setCheckIn, rollHabit, parseDateKey, repeatRulesEqual, undoTodayCheckIn as computeUndoToday } from '@/lib/habits/logic';
 import { nextHabitColor } from '@/lib/habits/palette';
 import { syncWeeklySeries, tearDownWeeklySeries } from '@/lib/actions/habitSeries';
 
@@ -119,6 +119,54 @@ export async function completeHabit(taskId: string, level: CheckInLevel): Promis
         }
     } catch (error) {
         console.error('Failed to complete habit:', error);
+    }
+}
+
+export async function undoTodayCheckIn(taskId: string): Promise<void> {
+    const task = useTasksStore.getState().tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    const today = formatDateKey(new Date());
+    const result = computeUndoToday(task, today);
+    if (!result) return;
+
+    const todayEvent = useCalendarStore.getState().events.find((e) => e.taskId === taskId && e.date === today);
+    const restoreSlot =
+        !task.calendarSlot && todayEvent
+            ? {
+                  date: todayEvent.date,
+                  startTime: todayEvent.startTime,
+                  endTime: todayEvent.endTime,
+                  eventId: todayEvent.id,
+              }
+            : null;
+
+    const optimistic: Partial<Task> = {
+        checkIns: result.checkIns,
+        checkInElapsed: result.checkInElapsed,
+    };
+    if (result.unroll) optimistic.dueDate = today;
+    if (restoreSlot) optimistic.calendarSlot = restoreSlot;
+
+    useTasksStore.getState().updateTask(taskId, optimistic);
+    if (todayEvent) {
+        useCalendarStore.getState().updateEvent(todayEvent.id, { status: 'scheduled' });
+    }
+
+    try {
+        const firestoreUpdates: Record<string, unknown> = {
+            [`checkIns.${today}`]: deleteField(),
+            [`checkInElapsed.${today}`]: deleteField(),
+        };
+        if (result.unroll) firestoreUpdates.dueDate = today;
+        if (restoreSlot) firestoreUpdates.calendarSlot = restoreSlot;
+        await updateDoc(doc(db, 'tasks', taskId), firestoreUpdates);
+
+        if (todayEvent) {
+            await updateDoc(doc(db, 'calendar_events', todayEvent.id), { status: 'scheduled' });
+        }
+    } catch (error) {
+        console.error('Failed to undo today’s check-in:', error);
     }
 }
 

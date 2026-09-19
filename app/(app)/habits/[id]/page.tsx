@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Pencil, Flame, Trophy } from 'lucide-react';
+import { ChevronLeft, Pencil, Trash2, Flame, Trophy } from 'lucide-react';
 import { useHabits } from '@/lib/hooks/useHabits';
 import { useAppStore } from '@/lib/store/app';
 import { fadeIn } from '@/lib/utils/animations';
@@ -20,7 +20,7 @@ export default function HabitDetailPage() {
     const params = useParams();
     const id = params?.id as string;
     const { habits, loading } = useHabits();
-    const { isHabitFormOpen, openHabitForm, closeHabitForm } = useAppStore();
+    const { isHabitFormOpen, openHabitForm, closeHabitForm, openDeleteConfirm } = useAppStore();
 
     const habit = habits.find((h) => h.id === id);
     const todayKey = formatDateKey(new Date());
@@ -78,12 +78,22 @@ export default function HabitDetailPage() {
                     <ChevronLeft className="w-4 h-4" /> Back to Habits
                 </Link>
 
-                <button
-                    onClick={() => openHabitForm(habit.id)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-bg-secondary text-text-primary text-sm font-semibold hover:bg-bg-tertiary transition-colors"
-                >
-                    <Pencil className="w-3.5 h-3.5" /> Edit
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => openDeleteConfirm(habit.id)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-bg-secondary text-danger text-sm font-semibold hover:bg-danger-bg transition-colors"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => openHabitForm(habit.id)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-bg-secondary text-text-primary text-sm font-semibold hover:bg-bg-tertiary transition-colors"
+                    >
+                        <Pencil className="w-3.5 h-3.5" /> Edit
+                    </button>
+                </div>
             </div>
 
             {/* Title & Color Badge */}

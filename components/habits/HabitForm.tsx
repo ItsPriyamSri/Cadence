@@ -7,7 +7,8 @@ import { createTask, updateTask } from '@/lib/actions/tasks';
 import { setTaskRepeat, setHabitColor, setSameTimeWeekly } from '@/lib/actions/habits';
 import { HABIT_PALETTE, nextHabitColor } from '@/lib/habits/palette';
 import { useTasksStore } from '@/lib/store/optimistic';
-import { Check } from 'lucide-react';
+import { Check, Trash2 } from 'lucide-react';
+import { useAppStore } from '@/lib/store/app';
 import { cn } from '@/lib/utils/cn';
 
 interface HabitFormProps {
@@ -32,6 +33,7 @@ const fieldClass =
 
 export function HabitForm({ initialHabit, onClose }: HabitFormProps) {
     const router = useRouter();
+    const openDeleteConfirm = useAppStore((s) => s.openDeleteConfirm);
 
     const [title, setTitle] = useState(initialHabit?.title || '');
     const [titleError, setTitleError] = useState(false);
@@ -285,6 +287,20 @@ export function HabitForm({ initialHabit, onClose }: HabitFormProps) {
             )}
 
             {submitError && <p className="text-sm text-danger font-medium">{submitError}</p>}
+
+            {initialHabit && (
+                <button
+                    type="button"
+                    onClick={() => {
+                        const id = initialHabit.id;
+                        onClose();
+                        openDeleteConfirm(id);
+                    }}
+                    className="w-full py-3 rounded-md border-[1.5px] border-border text-danger text-sm font-semibold hover:bg-danger-bg transition flex items-center justify-center gap-2"
+                >
+                    <Trash2 className="w-4 h-4" /> Delete habit
+                </button>
+            )}
 
             {/* Form actions */}
             <div className="flex gap-2.5 mt-1">
