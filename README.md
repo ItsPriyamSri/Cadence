@@ -1,76 +1,73 @@
 # Cadence
 
-A premium productivity PWA that celebrates **starting tasks** over completing them.
+Personal daily driver: capture in notes, plan on tasks, time-block on the calendar, come back for habits, stay with a focus clock.
 
-## ✨ Features
+A habit **is** a repeating task. Same title, same start / pause / done, same calendar block. Completing it from Tasks, Calendar, or Habits is one write.
 
-### Tasks
-- 📋 **Status Flow** - Default → Started → Paused → Done
-- ⭐ **Priority System** - Star tasks to pin them to the top
-- 🎉 **Confetti Celebration** - Celebrate when completing tasks
-- 🔍 **Smart Filters** - All, Today, Upcoming, Unscheduled, Completed
+PWA, mobile-first. Themes cycle light → dark → AMOLED.
 
-### Calendar
-- 📅 **Daily View** - 24-hour timeline (12 AM - 11 PM)
-- 🖱️ **Drag & Drop** - Drag tasks from inbox to schedule them
-- ⏱️ **Duration Editor** - Click events to adjust start/end times (15-min intervals)
-- 🔄 **Bidirectional Sync** - Tasks ↔ Calendar events stay in sync
+## Surfaces
 
-### Notes (Brain Dump)
-- 📝 **Quick Capture** - Auto-saving notes
-- 🎯 **Goals Tile** - Collapsible goals section with weekly/monthly/quarterly tracking
+Nav: **Tasks · Calendar · Habits · Notes**
 
-### Themes
-- 🌙 **AMOLED Dark** - True black with vibrant accent colors
-- ☀️ **Light Mode** - Clean, minimal interface
+**Tasks.** Status is default → started → paused ↔ started. One-offs can be done. Habits roll instead: they never sit as done. Filters are Today, Upcoming, Inbox, All, and Done. Priority stars pin a task. The bottom of the page is a today recap (elapsed, habits + one-offs).
 
-### PWA
-- 📱 **Installable** - Add to home screen on mobile/desktop
-- 🔔 **Offline Ready** - Works without internet
+**Calendar.** Day timeline. Drag an unscheduled task onto a block (on a phone, swipe the inbox row and drag the grip). Completed habit blocks stay on today. Optional same-time weekly fills this week’s due days at a locked clock.
 
-## Tech Stack
+**Habits.** Every task with a repeat rule. Repeat is daily, every N days, or chosen weekdays. Each row has a 90-day contribution graph (3 × 30). Habits complete asks Partial or Full; Tasks/Calendar Done writes Full with no popup. Start writes Partial if today is empty. **Clear today** undoes today’s check-in. Detail has streaks, a month calendar, edit, and delete. Repeat Off turns it back into a one-off and keeps history.
 
-- **Framework**: Next.js 15 (React 19) with App Router
-- **Styling**: Tailwind CSS
-- **Animations**: Framer Motion
-- **Drag & Drop**: @dnd-kit/core
-- **State**: Zustand (optimistic updates)
-- **Database**: Firebase Firestore (real-time sync)
-- **Auth**: Firebase Auth (Google Sign-In)
+**Notes (Brain Dump).** Autosaving notes and a collapsible goals tile (weekly / monthly / quarterly / custom). Goals are outcomes, not habits.
 
-## Getting Started
+**Focus.** One live timer. Starting B pauses A. The Tasks pill shows title + elapsed; tap it for a full-page ring. Slide down or back to collapse. Not-started is `0:00`.
 
-1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+## Stack
 
-2. **Configure Firebase**:
-   - Copy `.env.local.example` to `.env.local`
-   - Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-   - Enable Firestore and Authentication (Google provider)
-   - Add your Firebase config keys to `.env.local`
+Next.js 15 (App Router), React 19, Tailwind, Framer Motion, Zustand (optimistic), @dnd-kit, Firebase Auth + Firestore, `@ducanh2912/next-pwa`.
 
-3. **Create Firestore Indexes** (required for queries):
-   - Go to Firebase Console → Firestore → Indexes
-   - Create these composite indexes:
+Collections: `tasks`, `calendar_events`, `notes`, `goals`, `users`. No reports collection.
 
-   | Collection | Fields |
-   |------------|--------|
-   | `tasks` | `userId` (Asc) + `order` (Asc) |
-   | `notes` | `userId` (Asc) + `updatedAt` (Desc) |
-   | `goals` | `userId` (Asc) + `endDate` (Asc) |
+## Setup
 
-4. **Run the dev server**:
-   ```bash
-   npm run dev
-   ```
+```bash
+npm install
+cp .env.local.example .env.local
+```
 
-5. **Open** [http://localhost:3000](http://localhost:3000)
+Create a Firebase project. Enable Firestore and Authentication (Google and/or email). Fill `.env.local`:
 
-## Firebase Setup
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+```
 
-### Firestore Security Rules
+Composite indexes (Firestore → Indexes), matching the live queries:
+
+| Collection | Fields |
+|---|---|
+| `tasks` | `userId` Asc, `order` Asc |
+| `notes` | `userId` Asc, `updatedAt` Desc |
+| `goals` | `userId` Asc, `createdAt` Desc |
+
+`calendar_events` is `userId` only; no composite index.
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+Habit roll / streak / recap logic (no Firebase):
+
+```bash
+npx tsx lib/habits/logic.selfcheck.ts
+```
+
+## Firestore rules
+
 ```
 rules_version = '2';
 service cloud.firestore {
@@ -106,17 +103,15 @@ service cloud.firestore {
 }
 ```
 
-## Deployment
+## Deploy
 
-### Vercel (Recommended)
-1. Push to GitHub
-2. Import project in [vercel.com](https://vercel.com)
-3. Add environment variables in Vercel dashboard
-4. Add your Vercel domain to Firebase Auth → Authorized domains
+Vercel: import the repo, add the same env vars, add the Vercel domain under Firebase Auth → Authorized domains.
 
 ```bash
 vercel --prod
 ```
+
+Locked product rules live in [`docs/cadence-overhaul/PRD.md`](docs/cadence-overhaul/PRD.md) and [`docs/cadence-overhaul/SRS.md`](docs/cadence-overhaul/SRS.md).
 
 ## License
 
