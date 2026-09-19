@@ -12,11 +12,15 @@ import { navItems, tabFromPathname } from './navConfig';
 export function MobileNav() {
     const pathname = usePathname();
     const tab = tabFromPathname(pathname);
-    const { openTaskForm, requestNoteCompose } = useAppStore();
+    const { openTaskForm, openHabitForm, requestNoteCompose } = useAppStore();
 
-    const showFab = tab === 'tasks' || tab === 'notes';
-    const fabAction = () => (tab === 'tasks' ? openTaskForm() : requestNoteCompose());
-    const fabLabel = tab === 'tasks' ? 'New Task' : 'Capture a thought';
+    const showFab = tab === 'tasks' || tab === 'notes' || tab === 'habits';
+    const fabAction = () => {
+        if (tab === 'tasks') return openTaskForm();
+        if (tab === 'habits') return openHabitForm();
+        return requestNoteCompose();
+    };
+    const fabLabel = tab === 'tasks' ? 'New Task' : tab === 'habits' ? 'New Habit' : 'Capture a thought';
 
     return (
         <div className="md:hidden">
@@ -48,7 +52,7 @@ export function MobileNav() {
                                 aria-current={isActive ? 'page' : undefined}
                                 aria-label={item.label}
                                 className={cn(
-                                    'relative flex flex-col items-center justify-center gap-1 w-[72px] h-12 rounded-2xl transition-colors',
+                                    'relative flex flex-col items-center justify-center gap-1 w-16 h-12 rounded-2xl transition-colors',
                                     isActive ? 'text-accent' : 'text-text-secondary active:text-text-primary'
                                 )}
                             >

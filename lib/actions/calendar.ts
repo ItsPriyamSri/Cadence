@@ -11,6 +11,7 @@ import { db, CalendarEvent } from '@/lib/firebase/firestore';
 import { getCurrentUserId } from '@/lib/firebase/auth';
 import { useCalendarStore, useTasksStore } from '@/lib/store/optimistic';
 import { updateTask } from '@/lib/actions/tasks';
+import { syncWeeklySeries, tearDownWeeklySeries } from '@/lib/actions/habitSeries';
 
 export function addHour(time: string): string {
     const [h, m] = time.split(':').map(Number);
@@ -35,6 +36,28 @@ export async function setTaskSchedule(
 
     if (!schedule) {
         if (existingEventId) await unscheduleTask(taskId, existingEventId);
+        // Unscheduling a same-time habit disables the toggle and tears down its series.
+        if (task?.sameTimeWeekly) {
+            useTasksStore.getState().updateTask(taskId, { sameTimeWeekly: false, lockedTime: null });
+            try {
+                await updateDoc(doc(db, 'tasks', taskId), { sameTimeWeekly: false, lockedTime: null });
+            } catch (error) {
+                console.error('Failed to disable same-time weekly on unschedule:', error);
+            }
+            await tearDownWeeklySeries(taskId, null);
+        }
+        return;
+    }
+
+    if (task?.repeat && task.sameTimeWeekly) {
+        const lockedTime = { startTime: schedule.startTime, endTime: schedule.endTime };
+        useTasksStore.getState().updateTask(taskId, { lockedTime });
+        try {
+            await updateDoc(doc(db, 'tasks', taskId), { lockedTime });
+        } catch (error) {
+            console.error('Failed to lock habit time:', error);
+        }
+        await syncWeeklySeries(taskId);
         return;
     }
 
@@ -66,6 +89,7 @@ interface CreateEventInput {
     endTime: string;
     taskId?: string | null;
     color?: string;
+    boundWeekly?: boolean;
 }
 
 function generateTempId(): string {
@@ -88,6 +112,7 @@ export async function createCalendarEvent(input: CreateEventInput): Promise<stri
         endTime: input.endTime,
         status: 'scheduled',
         color: input.color || '#3a86ff',
+        boundWeekly: input.boundWeekly ?? false,
     };
 
     useCalendarStore.getState().addEvent(optimisticEvent);
@@ -106,6 +131,7 @@ export async function createCalendarEvent(input: CreateEventInput): Promise<stri
             endTime: input.endTime,
             status: 'scheduled',
             color: input.color || '#3a86ff',
+            boundWeekly: input.boundWeekly ?? false,
         });
 
         useCalendarStore.getState().updateEvent(tempId, { id: eventRef.id } as any);
@@ -120,6 +146,11 @@ export async function updateCalendarEvent(
     eventId: string,
     updates: Partial<CalendarEvent>
 ) {
+    const event = useCalendarStore.getState().events.find((e) => e.id === eventId);
+    const timeChanged = updates.startTime !== undefined || updates.endTime !== undefined;
+    const linkedTask = event?.taskId ? useTasksStore.getState().tasks.find((t) => t.id === event.taskId) : null;
+    const isBoundSeriesTimeChange = timeChanged && Boolean(event?.boundWeekly || linkedTask?.sameTimeWeekly);
+
     useCalendarStore.getState().updateEvent(eventId, updates);
 
     try {
@@ -127,6 +158,21 @@ export async function updateCalendarEvent(
         await updateDoc(eventRef, updates);
     } catch (error) {
         console.error('Failed to update event:', error);
+    }
+
+    // Same-time weekly: a time edit on any bound event re-locks and re-syncs the whole series.
+    if (isBoundSeriesTimeChange && event && linkedTask) {
+        const lockedTime = {
+            startTime: updates.startTime ?? event.startTime,
+            endTime: updates.endTime ?? event.endTime,
+        };
+        useTasksStore.getState().updateTask(linkedTask.id, { lockedTime });
+        try {
+            await updateDoc(doc(db, 'tasks', linkedTask.id), { lockedTime });
+        } catch (error) {
+            console.error('Failed to sync habit locked time:', error);
+        }
+        await syncWeeklySeries(linkedTask.id);
     }
 }
 
@@ -176,6 +222,7 @@ export async function handleTaskDropOnCalendar(
         endTime,
         status: eventStatus,
         color: '#3a86ff',
+        boundWeekly: false,
     };
 
     useCalendarStore.getState().addEvent(optimisticEvent);
@@ -206,6 +253,7 @@ export async function handleTaskDropOnCalendar(
             endTime,
             status: eventStatus,
             color: '#3a86ff',
+            boundWeekly: false,
         });
 
         // Update with real event ID
@@ -231,6 +279,18 @@ export async function handleTaskDropOnCalendar(
                 eventId: eventRef.id,
             },
         });
+
+        // Same-time weekly habits lock this hour and project it onto the week.
+        if (task?.repeat && task.sameTimeWeekly) {
+            const lockedTime = { startTime, endTime };
+            useTasksStore.getState().updateTask(taskId, { lockedTime });
+            try {
+                await updateDoc(doc(db, 'tasks', taskId), { lockedTime });
+            } catch (lockError) {
+                console.error('Failed to lock habit time on drop:', lockError);
+            }
+            await syncWeeklySeries(taskId);
+        }
     } catch (error) {
         // Rollback
         useCalendarStore.getState().removeEvent(tempEventId);
@@ -240,14 +300,8 @@ export async function handleTaskDropOnCalendar(
 }
 
 export async function handleEventResize(eventId: string, newEndTime: string) {
-    useCalendarStore.getState().updateEvent(eventId, { endTime: newEndTime });
-
-    try {
-        const eventRef = doc(db, 'calendar_events', eventId);
-        await updateDoc(eventRef, { endTime: newEndTime });
-    } catch (error) {
-        console.error('Failed to resize event:', error);
-    }
+    // Delegate to updateCalendarEvent so a bound weekly series re-syncs the same way a time edit would.
+    await updateCalendarEvent(eventId, { endTime: newEndTime });
 }
 
 export async function unscheduleTask(taskId: string, eventId: string) {
@@ -278,6 +332,23 @@ export async function unscheduleTask(taskId: string, eventId: string) {
 export async function rescheduleEvent(eventId: string, newDate: string, newHour: number, taskId: string | null) {
     const startTime = `${newHour.toString().padStart(2, '0')}:00`;
     const endTime = `${(newHour + 1).toString().padStart(2, '0')}:00`;
+
+    const event = useCalendarStore.getState().events.find((e) => e.id === eventId);
+    const linkedTask = taskId ? useTasksStore.getState().tasks.find((t) => t.id === taskId) : null;
+    const isBound = Boolean(event?.boundWeekly || linkedTask?.sameTimeWeekly);
+
+    if (isBound && taskId && linkedTask) {
+        // Bound events only move in time, never date — re-lock the hour and re-sync the series.
+        const lockedTime = { startTime, endTime };
+        useTasksStore.getState().updateTask(taskId, { lockedTime });
+        try {
+            await updateDoc(doc(db, 'tasks', taskId), { lockedTime });
+        } catch (error) {
+            console.error('Failed to reschedule habit locked time:', error);
+        }
+        await syncWeeklySeries(taskId);
+        return;
+    }
 
     // Optimistic update for calendar event
     useCalendarStore.getState().updateEvent(eventId, {

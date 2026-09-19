@@ -5,8 +5,10 @@ import { motion } from 'framer-motion';
 import { Clock, Calendar, CalendarOff } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { CalendarEvent } from '@/lib/firebase/firestore';
-import { updateCalendarEvent, unscheduleTask, deleteCalendarEvent } from '@/lib/actions/calendar';
+import { updateCalendarEvent, unscheduleTask } from '@/lib/actions/calendar';
 import { updateTask } from '@/lib/actions/tasks';
+import { setSameTimeWeekly } from '@/lib/actions/habits';
+import { useTasksStore } from '@/lib/store/optimistic';
 import { cn } from '@/lib/utils/cn';
 import { format, addDays, subDays } from 'date-fns';
 
@@ -78,28 +80,30 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
         }
     }, [event]);
 
+    const linkedTask = event?.taskId
+        ? useTasksStore.getState().tasks.find((t) => t.id === event.taskId)
+        : null;
+    const isBoundSeries = Boolean(event?.boundWeekly || linkedTask?.sameTimeWeekly);
+
     const handleSave = async () => {
         if (!event) return;
 
         setIsSaving(true);
         try {
-            // Update calendar event with new date and times
-            await updateCalendarEvent(event.id, {
-                date,
-                startTime,
-                endTime,
-            });
-
-            // If linked to a task, update the task's calendar slot
-            if (event.taskId) {
-                await updateTask(event.taskId, {
-                    calendarSlot: {
-                        date,
-                        startTime,
-                        endTime,
-                        eventId: event.id,
-                    },
-                });
+            if (isBoundSeries) {
+                await updateCalendarEvent(event.id, { startTime, endTime });
+            } else {
+                await updateCalendarEvent(event.id, { date, startTime, endTime });
+                if (event.taskId) {
+                    await updateTask(event.taskId, {
+                        calendarSlot: {
+                            date,
+                            startTime,
+                            endTime,
+                            eventId: event.id,
+                        },
+                    });
+                }
             }
 
             onClose();
@@ -115,7 +119,11 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
 
         setIsUnscheduling(true);
         try {
-            await unscheduleTask(event.taskId, event.id);
+            if (isBoundSeries) {
+                await setSameTimeWeekly(event.taskId, false);
+            } else {
+                await unscheduleTask(event.taskId, event.id);
+            }
             onClose();
         } catch (error) {
             console.error('Failed to unschedule task:', error);
@@ -161,12 +169,14 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
                         Date
                     </label>
                     <select
-                        value={date}
+                        value={isBoundSeries ? event.date : date}
                         onChange={(e) => setDate(e.target.value)}
+                        disabled={isBoundSeries}
                         className={cn(
                             'w-full p-3 rounded-xl border border-border bg-bg-secondary',
                             'text-text-primary focus:outline-none focus:border-accent',
-                            'transition-colors'
+                            'transition-colors',
+                            isBoundSeries && 'opacity-60'
                         )}
                     >
                         {dateOptions.map((d) => (
@@ -276,7 +286,11 @@ export function EventTimeEditor({ event, isOpen, onClose }: EventTimeEditorProps
                         )}
                     >
                         <CalendarOff className="w-4 h-4" />
-                        {isUnscheduling ? 'Removing...' : 'Remove from Calendar'}
+                        {isUnscheduling
+                            ? 'Removing...'
+                            : isBoundSeries
+                                ? 'Stop repeating this time'
+                                : 'Remove from Calendar'}
                     </button>
                 )}
             </div>

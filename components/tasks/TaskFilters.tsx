@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
+import { formatDateKey } from '@/lib/utils/dates';
 import { useAppStore } from '@/lib/store/app';
 import { useTasks } from '@/lib/hooks/useTasks';
 import { cn } from '@/lib/utils/cn';
@@ -22,13 +22,38 @@ export function TaskFilters() {
     const { tasks } = useTasks();
 
     const counts = useMemo(() => {
-        const today = format(new Date(), 'yyyy-MM-dd');
+        const today = formatDateKey(new Date());
+
         return {
-            all: tasks.filter((t) => t.status !== 'done').length,
-            today: tasks.filter((t) => t.calendarSlot?.date === today && t.status !== 'done').length,
-            upcoming: tasks.filter((t) => t.calendarSlot?.date && t.calendarSlot.date > today && t.status !== 'done').length,
-            unscheduled: tasks.filter((t) => !t.calendarSlot && t.status !== 'done').length,
-            completed: tasks.filter((t) => t.status === 'done').length,
+            all: tasks.filter((t) => {
+                if (t.status === 'done') return false;
+                if (t.repeat !== null && t.dueDate !== null && t.dueDate > today) return false;
+                return true;
+            }).length,
+
+            today: tasks.filter((t) => {
+                if (t.status === 'done') return false;
+                if (t.repeat !== null) {
+                    return t.dueDate !== null && t.dueDate <= today;
+                }
+                return t.calendarSlot?.date === today;
+            }).length,
+
+            upcoming: tasks.filter((t) => {
+                if (t.status === 'done') return false;
+                if (t.repeat !== null) {
+                    return t.dueDate !== null && t.dueDate > today;
+                }
+                return !!(t.calendarSlot?.date && t.calendarSlot.date > today);
+            }).length,
+
+            unscheduled: tasks.filter((t) => {
+                if (t.status === 'done' || t.calendarSlot) return false;
+                if (t.repeat !== null && t.dueDate !== null && t.dueDate > today) return false;
+                return true;
+            }).length,
+
+            completed: tasks.filter((t) => t.repeat === null && t.status === 'done').length,
         } as Record<FilterOption, number>;
     }, [tasks]);
 
