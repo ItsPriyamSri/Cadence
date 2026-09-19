@@ -92,7 +92,7 @@ export function DailyCalendar() {
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-        useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } })
+        useSensor(TouchSensor, { activationConstraint: { distance: 12 } })
     );
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -149,7 +149,14 @@ export function DailyCalendar() {
     const goToNextDay = () => setSelectedDate(addDays(selectedDate, 1));
     const goToToday = () => setSelectedDate(new Date());
 
-    const unscheduledTasks = tasks.filter((t) => !t.calendarSlot && t.status !== 'done');
+    const todayKey = formatDateKey(new Date());
+    const unscheduledTasks = useMemo(() => {
+        return tasks.filter((t) => {
+            if (t.status === 'done' || t.calendarSlot) return false;
+            if (t.repeat !== null && t.dueDate !== null && t.dueDate > todayKey) return false;
+            return true;
+        });
+    }, [tasks, todayKey]);
 
     if (loading && events.length === 0) {
         return (
@@ -207,19 +214,14 @@ export function DailyCalendar() {
                     </div>
 
                     {/* Mobile tray */}
-                    <div className="md:hidden shrink-0 pt-3">
+                    <div className="md:hidden shrink-0 pt-3 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                             <Move className="w-[15px] h-[15px] text-text-tertiary" />
                             <span className="text-xs font-bold tracking-[0.04em] uppercase text-text-tertiary">Drag to schedule</span>
                         </div>
                         {unscheduledTasks.length > 0 ? (
-                            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
-                                {unscheduledTasks.slice(0, 8).map((task) => <DraggableTask key={task.id} task={task} />)}
-                                {unscheduledTasks.length > 8 && (
-                                    <span className="flex items-center px-3 text-sm font-semibold text-text-tertiary whitespace-nowrap">
-                                        +{unscheduledTasks.length - 8} more
-                                    </span>
-                                )}
+                            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1 min-w-0 touch-pan-x">
+                                {unscheduledTasks.map((task) => <DraggableTask key={task.id} task={task} />)}
                             </div>
                         ) : (
                             <p className="text-sm text-text-tertiary">All caught up — nothing unscheduled.</p>
@@ -306,7 +308,7 @@ function DraggableTask({ task, wrap }: { task: Task; wrap?: boolean }) {
             {...attributes}
             style={{ touchAction: 'none' }}
             className={cn(
-                'select-none flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-primary border border-border shadow-elev-1',
+                'select-none flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-primary border border-border shadow-elev-1 shrink-0',
                 'cursor-grab active:cursor-grabbing hover:shadow-elev-2 hover:-translate-y-px transition',
                 isDragging && 'opacity-50'
             )}
