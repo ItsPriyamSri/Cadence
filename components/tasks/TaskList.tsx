@@ -3,13 +3,14 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ChevronRight, RotateCcw, Check, Search } from 'lucide-react';
-import { format } from 'date-fns';
 import { TaskCard } from './TaskCard';
 import { TaskFilters } from './TaskFilters';
+import { TodayRecap } from './TodayRecap';
 import { CadenceLoader } from '@/components/ui/CadenceLoader';
 import { useTasks } from '@/lib/hooks/useTasks';
 import { useAppStore } from '@/lib/store/app';
 import { updateTaskStatus } from '@/lib/actions/tasks';
+import { formatDateKey } from '@/lib/utils/dates';
 import { cn } from '@/lib/utils/cn';
 import { Task } from '@/lib/firebase/firestore';
 
@@ -19,24 +20,47 @@ export function TaskList() {
     const [pastOpen, setPastOpen] = React.useState(false);
 
     const filteredTasks = useMemo(() => {
-        const today = format(new Date(), 'yyyy-MM-dd');
-        let filtered = [...tasks];
+        const today = formatDateKey(new Date());
+        let filtered: Task[] = [];
+
         switch (taskFilter) {
             case 'today':
-                filtered = tasks.filter((t) => t.calendarSlot?.date === today && t.status !== 'done');
+                filtered = tasks.filter((t) => {
+                    if (t.status === 'done') return false;
+                    if (t.repeat !== null) {
+                        return t.dueDate !== null && t.dueDate <= today;
+                    }
+                    return t.calendarSlot?.date === today;
+                });
                 break;
             case 'upcoming':
-                filtered = tasks.filter((t) => t.calendarSlot?.date && t.calendarSlot.date > today && t.status !== 'done');
+                filtered = tasks.filter((t) => {
+                    if (t.status === 'done') return false;
+                    if (t.repeat !== null) {
+                        return t.dueDate !== null && t.dueDate > today;
+                    }
+                    return !!(t.calendarSlot?.date && t.calendarSlot.date > today);
+                });
                 break;
             case 'unscheduled':
-                filtered = tasks.filter((t) => !t.calendarSlot && t.status !== 'done');
+                filtered = tasks.filter((t) => {
+                    if (t.status === 'done' || t.calendarSlot) return false;
+                    if (t.repeat !== null && t.dueDate !== null && t.dueDate > today) return false;
+                    return true;
+                });
                 break;
             case 'completed':
-                filtered = tasks.filter((t) => t.status === 'done');
+                filtered = tasks.filter((t) => t.repeat === null && t.status === 'done');
                 break;
             default:
-                filtered = tasks.filter((t) => t.status !== 'done');
+                // 'all': not done, excluding habits with dueDate > today
+                filtered = tasks.filter((t) => {
+                    if (t.status === 'done') return false;
+                    if (t.repeat !== null && t.dueDate !== null && t.dueDate > today) return false;
+                    return true;
+                });
         }
+
         const statusOrder = { started: 0, paused: 1, default: 2, done: 3 };
         return filtered.sort((a, b) => {
             if (a.priority && !b.priority) return -1;
@@ -49,15 +73,15 @@ export function TaskList() {
 
     const { todayCompleted, pastCompleted } = useMemo(() => {
         if (taskFilter !== 'completed') return { todayCompleted: [] as Task[], pastCompleted: [] as Task[] };
-        const today = format(new Date(), 'yyyy-MM-dd');
+        const today = formatDateKey(new Date());
         const todayC = filteredTasks.filter((t) => {
             if (!t.completedAt) return true;
-            const d = t.completedAt.toDate ? format(t.completedAt.toDate(), 'yyyy-MM-dd') : today;
+            const d = t.completedAt.toDate ? formatDateKey(t.completedAt.toDate()) : today;
             return d === today;
         });
         const pastC = filteredTasks.filter((t) => {
             if (!t.completedAt) return false;
-            const d = t.completedAt.toDate ? format(t.completedAt.toDate(), 'yyyy-MM-dd') : '';
+            const d = t.completedAt.toDate ? formatDateKey(t.completedAt.toDate()) : '';
             return d !== today && d !== '';
         });
         return { todayCompleted: todayC, pastCompleted: pastC };
@@ -134,6 +158,9 @@ export function TaskList() {
                     </AnimatePresence>
                 </motion.div>
             )}
+
+            {/* Live Today Recap */}
+            <TodayRecap tasks={tasks} />
         </div>
     );
 }
