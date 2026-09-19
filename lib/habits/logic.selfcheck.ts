@@ -10,7 +10,12 @@ import {
     rollHabit,
     todayRecapItems,
     weekStartKey,
+    repeatRulesEqual,
 } from './logic';
+
+assert.equal(repeatRulesEqual({ kind: 'daily' }, { kind: 'daily' }), true);
+assert.equal(repeatRulesEqual({ kind: 'everyN', n: 2 }, { kind: 'everyN', n: 3 }), false);
+assert.equal(repeatRulesEqual({ kind: 'weekdays', days: [1, 3] }, { kind: 'weekdays', days: [3, 1] }), true);
 
 const daily = { kind: 'daily' as const };
 const every2 = { kind: 'everyN' as const, n: 2 };

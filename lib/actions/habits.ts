@@ -3,7 +3,7 @@
 import { db, doc, updateDoc, Task, RepeatRule, CheckInLevel } from '@/lib/firebase/firestore';
 import { useTasksStore, useCalendarStore } from '@/lib/store/optimistic';
 import { formatDateKey, addDays } from '@/lib/utils/dates';
-import { isDueOn, nextDueDate, setCheckIn, rollHabit, parseDateKey } from '@/lib/habits/logic';
+import { isDueOn, nextDueDate, setCheckIn, rollHabit, parseDateKey, repeatRulesEqual } from '@/lib/habits/logic';
 import { nextHabitColor } from '@/lib/habits/palette';
 import { syncWeeklySeries, tearDownWeeklySeries } from '@/lib/actions/habitSeries';
 
@@ -43,9 +43,12 @@ export async function setTaskRepeat(
         .tasks.filter((t) => t.id !== taskId && t.repeat !== null && t.color)
         .map((t) => t.color as string);
     const color = extras?.color ?? task.color ?? nextHabitColor(otherHexes);
-    const dueDate = isDueOn(repeat, today, habitStartedOn)
-        ? today
-        : nextDueDate(repeat, formatDateKey(addDays(parseDateKey(today), -1)), habitStartedOn);
+    const ruleUnchanged = Boolean(task.repeat && task.dueDate && repeatRulesEqual(task.repeat, repeat));
+    const dueDate = ruleUnchanged
+        ? task.dueDate
+        : isDueOn(repeat, today, habitStartedOn)
+            ? today
+            : nextDueDate(repeat, formatDateKey(addDays(parseDateKey(today), -1)), habitStartedOn);
 
     const updates: Partial<Task> = { repeat, habitStartedOn, color, dueDate };
     if (extras?.sameTimeWeekly === true) {

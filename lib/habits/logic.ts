@@ -4,6 +4,18 @@ import type { RepeatRule, CheckInLevel, Task } from '@/lib/firebase/firestore';
 import { formatDateKey, addDays, getWeekRange } from '@/lib/utils/dates';
 
 /** Parse a local `yyyy-MM-dd` key as a local calendar date (never UTC). */
+export function repeatRulesEqual(a: RepeatRule | null, b: RepeatRule | null): boolean {
+    if (a === b) return true;
+    if (!a || !b || a.kind !== b.kind) return false;
+    if (a.kind === 'everyN' && b.kind === 'everyN') return a.n === b.n;
+    if (a.kind === 'weekdays' && b.kind === 'weekdays') {
+        const left = [...a.days].sort((x, y) => x - y).join(',');
+        const right = [...b.days].sort((x, y) => x - y).join(',');
+        return left === right;
+    }
+    return a.kind === 'daily';
+}
+
 export function parseDateKey(key: string): Date {
     const [y, m, d] = key.split('-').map(Number);
     return new Date(y, m - 1, d);

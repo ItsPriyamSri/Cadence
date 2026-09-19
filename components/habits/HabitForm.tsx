@@ -109,12 +109,12 @@ export function HabitForm({ initialHabit, onClose }: HabitFormProps) {
                 }
 
                 await updateTask(initialHabit.id, { title: trimmed });
-                await setHabitColor(initialHabit.id, color);
-                await setSameTimeWeekly(initialHabit.id, sameTimeWeekly);
                 await setTaskRepeat(initialHabit.id, rule, {
                     sameTimeWeekly,
                     color,
                 });
+                await setHabitColor(initialHabit.id, color);
+                await setSameTimeWeekly(initialHabit.id, sameTimeWeekly);
             } else {
                 if (rule === null) {
                     // Creating one-off from habit form

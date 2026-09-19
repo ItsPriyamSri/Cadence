@@ -68,6 +68,14 @@ export async function syncWeeklySeries(taskId: string): Promise<void> {
         await deleteCalendarEvent(event.id);
     }
 
+    // Drop leftover scheduled (not completed) series blocks from past weeks so Spark stays small.
+    const stale = useCalendarStore
+        .getState()
+        .events.filter((e) => e.taskId === taskId && e.boundWeekly && e.date < monday && e.status !== 'completed');
+    for (const event of stale) {
+        await deleteCalendarEvent(event.id);
+    }
+
     // Primary slot: today's event if due/completed today, else the next due day this week, else null.
     const freshEvents = useCalendarStore.getState().events.filter((e) => e.taskId === taskId && e.boundWeekly);
     const todayEvent = freshEvents.find((e) => e.date === today);
@@ -80,6 +88,17 @@ export async function syncWeeklySeries(taskId: string): Promise<void> {
     const calendarSlot = primary
         ? { date: primary.date, startTime: primary.startTime, endTime: primary.endTime, eventId: primary.id }
         : null;
+
+    const prev = task.calendarSlot;
+    const sameSlot =
+        (prev === null && calendarSlot === null) ||
+        (prev !== null &&
+            calendarSlot !== null &&
+            prev.eventId === calendarSlot.eventId &&
+            prev.date === calendarSlot.date &&
+            prev.startTime === calendarSlot.startTime &&
+            prev.endTime === calendarSlot.endTime);
+    if (sameSlot) return;
 
     useTasksStore.getState().updateTask(taskId, { calendarSlot });
     try {
