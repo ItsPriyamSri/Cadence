@@ -17,14 +17,19 @@ interface AppState {
     setTaskFilter: (filter: TaskFilter) => void;
 
     // Mobile navigation
-    activeTab: 'tasks' | 'notes' | 'calendar';
-    setActiveTab: (tab: 'tasks' | 'notes' | 'calendar') => void;
+    activeTab: 'tasks' | 'notes' | 'calendar' | 'habits';
+    setActiveTab: (tab: 'tasks' | 'notes' | 'calendar' | 'habits') => void;
 
     // Modal states
     isTaskFormOpen: boolean;
     editingTaskId: string | null;
     openTaskForm: (taskId?: string) => void;
     closeTaskForm: () => void;
+
+    isHabitFormOpen: boolean;
+    editingHabitId: string | null;
+    openHabitForm: (habitId?: string) => void;
+    closeHabitForm: () => void;
 
     isGoalModalOpen: boolean;
     editingGoalId: string | null;
@@ -105,6 +110,18 @@ export const useAppStore = create<AppState>()(
             closeTaskForm: () => set({
                 isTaskFormOpen: false,
                 editingTaskId: null
+            }),
+
+            // Habit form modal
+            isHabitFormOpen: false,
+            editingHabitId: null,
+            openHabitForm: (habitId) => set({
+                isHabitFormOpen: true,
+                editingHabitId: habitId || null
+            }),
+            closeHabitForm: () => set({
+                isHabitFormOpen: false,
+                editingHabitId: null
             }),
 
             // Goal modal

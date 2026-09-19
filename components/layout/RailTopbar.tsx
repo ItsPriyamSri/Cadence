@@ -10,7 +10,7 @@ export function RailTopbar() {
     const pathname = usePathname();
     const tab = tabFromPathname(pathname);
     const meta = pageMeta[tab];
-    const { openTaskForm, requestNoteCompose } = useAppStore();
+    const { openTaskForm, openHabitForm, requestNoteCompose } = useAppStore();
 
     return (
         <div className="hidden md:flex items-center gap-3.5 px-8 pt-6 pb-4">
@@ -25,6 +25,14 @@ export function RailTopbar() {
                     className="flex items-center gap-2 px-[18px] py-2.5 rounded-md border-none bg-accent text-on-accent text-sm font-semibold shadow-[0_6px_16px_var(--accent-glow)] transition-transform active:scale-[0.97] hover:brightness-105"
                 >
                     <Plus className="w-[18px] h-[18px]" strokeWidth={2.4} /> New Task
+                </button>
+            )}
+            {tab === 'habits' && (
+                <button
+                    onClick={() => openHabitForm()}
+                    className="flex items-center gap-2 px-[18px] py-2.5 rounded-md border-none bg-accent text-on-accent text-sm font-semibold shadow-[0_6px_16px_var(--accent-glow)] transition-transform active:scale-[0.97] hover:brightness-105"
+                >
+                    <Plus className="w-[18px] h-[18px]" strokeWidth={2.4} /> New Habit
                 </button>
             )}
             {tab === 'notes' && (

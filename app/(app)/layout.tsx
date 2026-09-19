@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
@@ -10,6 +10,9 @@ import { InstallPrompt } from '@/components/ui/InstallPrompt';
 import { Confetti } from '@/components/ui/Confetti';
 import { CadenceLoader } from '@/components/ui/CadenceLoader';
 import { useUser } from '@/lib/firebase/auth';
+import { useTasks } from '@/lib/hooks/useTasks';
+import { useCalendarEvents } from '@/lib/hooks/useCalendarEvents';
+import { ensureWeeklySeriesForOpenHabits } from '@/lib/actions/habitSeries';
 
 export default function AppLayout({
     children,
@@ -18,6 +21,22 @@ export default function AppLayout({
 }) {
     const { user, loading } = useUser();
     const router = useRouter();
+    const { tasks, loading: tasksLoading } = useTasks();
+    const { loading: eventsLoading } = useCalendarEvents();
+
+    const habits = useMemo(() => tasks.filter((t) => t.repeat != null), [tasks]);
+    const habitsSignature = useMemo(
+        () =>
+            habits
+                .map((h) => `${h.id}:${h.sameTimeWeekly}:${h.dueDate}:${h.lockedTime?.startTime}-${h.lockedTime?.endTime}`)
+                .join('|'),
+        [habits]
+    );
+
+    useEffect(() => {
+        if (tasksLoading || eventsLoading) return;
+        ensureWeeklySeriesForOpenHabits().catch((e) => console.error(e));
+    }, [tasksLoading, eventsLoading, habitsSignature]);
 
     useEffect(() => {
         if (!loading && !user) {
