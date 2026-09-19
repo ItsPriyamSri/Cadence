@@ -9,11 +9,15 @@ export interface ContributionGraphProps {
     color: string;
     checkIns: Record<string, 1 | 2>;
     days: string[];
-    cell?: number;
+    columns?: number;
     className?: string;
 }
 
-export function rollingDays(todayKey: string, count = 35): string[] {
+export const GRAPH_COLS = 30;
+export const GRAPH_ROWS = 3;
+export const GRAPH_DAYS = GRAPH_COLS * GRAPH_ROWS;
+
+export function rollingDays(todayKey: string, count = GRAPH_DAYS): string[] {
     const today = parseDateKey(todayKey);
     const days: string[] = [];
     for (let i = count - 1; i >= 0; i--) {
@@ -26,13 +30,14 @@ export function ContributionGraph({
     color,
     checkIns,
     days,
-    cell = 10,
     className,
+    columns = GRAPH_COLS,
 }: ContributionGraphProps) {
     return (
         <div
             aria-hidden="true"
-            className={cn('flex flex-wrap items-center gap-[3px]', className)}
+            className={cn('grid w-full gap-1', className)}
+            style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
         >
             {days.map((dateKey) => {
                 const level = checkIns[dateKey];
@@ -43,19 +48,14 @@ export function ContributionGraph({
                         key={dateKey}
                         title={`${dateKey}${level === 2 ? ' (Full)' : level === 1 ? ' (Partial)' : ' (Empty)'}`}
                         className={cn(
-                            'rounded-[2px] transition-colors shrink-0',
-                            !hasLevel && 'bg-bg-tertiary opacity-80'
+                            'aspect-square rounded-[3px] transition-colors',
+                            !hasLevel && 'bg-bg-tertiary'
                         )}
-                        style={{
-                            width: `${cell}px`,
-                            height: `${cell}px`,
-                            ...(hasLevel
-                                ? {
-                                      backgroundColor: color,
-                                      opacity: level === 2 ? 1 : 0.4,
-                                  }
-                                : {}),
-                        }}
+                        style={
+                            hasLevel
+                                ? { backgroundColor: color, opacity: level === 2 ? 1 : 0.42 }
+                                : undefined
+                        }
                     />
                 );
             })}
