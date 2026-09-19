@@ -1,16 +1,40 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Repeat } from 'lucide-react';
 import { useHabits } from '@/lib/hooks/useHabits';
 import { useAppStore } from '@/lib/store/app';
 import { fadeIn } from '@/lib/utils/animations';
 import { CadenceLoader } from '@/components/ui/CadenceLoader';
+import { HabitRow } from '@/components/habits/HabitRow';
+import { HabitForm } from '@/components/habits/HabitForm';
+import { Modal } from '@/components/ui/Modal';
+import { formatDateKey } from '@/lib/utils/dates';
 
 export default function HabitsPage() {
     const { habits, loading } = useHabits();
-    const { openHabitForm } = useAppStore();
+    const { isHabitFormOpen, editingHabitId, openHabitForm, closeHabitForm } = useAppStore();
+
+    const todayKey = formatDateKey(new Date());
+
+    const sortedHabits = useMemo(() => {
+        return [...habits].sort((a, b) => {
+            const aDueUnfinished =
+                a.dueDate !== null && a.dueDate <= todayKey && !a.checkIns[todayKey];
+            const bDueUnfinished =
+                b.dueDate !== null && b.dueDate <= todayKey && !b.checkIns[todayKey];
+
+            if (aDueUnfinished && !bDueUnfinished) return -1;
+            if (!aDueUnfinished && bDueUnfinished) return 1;
+
+            return a.title.localeCompare(b.title);
+        });
+    }, [habits, todayKey]);
+
+    const editingHabit = editingHabitId
+        ? habits.find((h) => h.id === editingHabitId) || null
+        : null;
 
     return (
         <motion.div
@@ -42,18 +66,22 @@ export default function HabitsPage() {
                     </button>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {/* Placeholder list until Task 2/3 */}
-                    {habits.map((habit) => (
-                        <div
-                            key={habit.id}
-                            className="p-4 rounded-lg bg-bg-primary border border-border shadow-elev-1"
-                        >
-                            <span className="font-semibold text-text-primary">{habit.title}</span>
-                        </div>
-                    ))}
-                </div>
+                <motion.div layout className="space-y-3">
+                    <AnimatePresence mode="popLayout" initial={false}>
+                        {sortedHabits.map((habit) => (
+                            <HabitRow key={habit.id} habit={habit} todayKey={todayKey} />
+                        ))}
+                    </AnimatePresence>
+                </motion.div>
             )}
+
+            <Modal
+                isOpen={isHabitFormOpen}
+                onClose={closeHabitForm}
+                title={editingHabitId ? 'Edit Habit' : 'New Habit'}
+            >
+                <HabitForm initialHabit={editingHabit} onClose={closeHabitForm} />
+            </Modal>
         </motion.div>
     );
 }
