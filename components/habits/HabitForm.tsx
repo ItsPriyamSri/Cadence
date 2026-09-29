@@ -6,6 +6,8 @@ import { Task, RepeatRule } from '@/lib/firebase/firestore';
 import { createTask, updateTask } from '@/lib/actions/tasks';
 import { setTaskRepeat, setHabitColor, setSameTimeWeekly } from '@/lib/actions/habits';
 import { HABIT_PALETTE, nextHabitColor } from '@/lib/habits/palette';
+import { HabitStartField } from '@/components/habits/HabitStartField';
+import { formatDateKey } from '@/lib/utils/dates';
 import { useTasksStore } from '@/lib/store/optimistic';
 import { Check, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/lib/store/app';
@@ -66,6 +68,8 @@ export function HabitForm({ initialHabit, onClose }: HabitFormProps) {
     const [sameTimeWeekly, setSameTimeWeeklyState] = useState<boolean>(
         initialHabit?.sameTimeWeekly ?? false
     );
+    const todayKey = formatDateKey(new Date());
+    const [startDate, setStartDate] = useState(initialHabit?.habitStartedOn || todayKey);
 
     const toggleWeekday = (day: number) => {
         if (selectedDays.includes(day)) {
@@ -114,6 +118,7 @@ export function HabitForm({ initialHabit, onClose }: HabitFormProps) {
                 await setTaskRepeat(initialHabit.id, rule, {
                     sameTimeWeekly,
                     color,
+                    startedOn: startDate,
                 });
                 await setHabitColor(initialHabit.id, color);
                 await setSameTimeWeekly(initialHabit.id, sameTimeWeekly);
@@ -126,6 +131,7 @@ export function HabitForm({ initialHabit, onClose }: HabitFormProps) {
                     await setTaskRepeat(taskId, rule, {
                         sameTimeWeekly,
                         color,
+                        startedOn: startDate,
                     });
                 }
             }
@@ -228,6 +234,10 @@ export function HabitForm({ initialHabit, onClose }: HabitFormProps) {
                     </div>
                 )}
             </div>
+
+            {repeatMode !== 'off' && (
+                <HabitStartField value={startDate} todayKey={todayKey} onChange={setStartDate} />
+            )}
 
             {/* Color swatches */}
             {repeatMode !== 'off' && (

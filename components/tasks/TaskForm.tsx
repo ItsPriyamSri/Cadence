@@ -7,6 +7,8 @@ import { createTask, updateTask } from '@/lib/actions/tasks';
 import { setTaskSchedule, addHour } from '@/lib/actions/calendar';
 import { setTaskRepeat, setHabitColor, setSameTimeWeekly } from '@/lib/actions/habits';
 import { HABIT_PALETTE, nextHabitColor } from '@/lib/habits/palette';
+import { HabitStartField } from '@/components/habits/HabitStartField';
+import { formatDateKey } from '@/lib/utils/dates';
 import { useActiveGoals } from '@/lib/hooks/useGoals';
 import { useTasksStore } from '@/lib/store/optimistic';
 import { Task, RepeatRule } from '@/lib/firebase/firestore';
@@ -66,6 +68,8 @@ export function TaskForm({ initialTask, onClose }: TaskFormProps) {
     const [sameTimeWeekly, setSameTimeWeeklyState] = useState<boolean>(
         initialTask?.sameTimeWeekly ?? false
     );
+    const todayKey = formatDateKey(new Date());
+    const [startDate, setStartDate] = useState(initialTask?.habitStartedOn || todayKey);
 
     const [loading, setLoading] = useState(false);
     const [titleError, setTitleError] = useState(false);
@@ -137,6 +141,7 @@ export function TaskForm({ initialTask, onClose }: TaskFormProps) {
                 await setTaskRepeat(taskId, rule, {
                     sameTimeWeekly,
                     color,
+                    startedOn: startDate,
                 });
                 if (initialTask) {
                     await setHabitColor(taskId, color);
@@ -284,6 +289,12 @@ export function TaskForm({ initialTask, onClose }: TaskFormProps) {
                                 </button>
                             );
                         })}
+                    </div>
+                )}
+
+                {repeatMode !== 'off' && (
+                    <div className="mt-2">
+                        <HabitStartField value={startDate} todayKey={todayKey} onChange={setStartDate} />
                     </div>
                 )}
 

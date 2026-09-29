@@ -219,7 +219,8 @@ export async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
         updates.startedAt = now;
         firestoreUpdates.startedAt = now;
 
-        if (task.repeat && task.checkIns[today] === undefined) {
+        const beforeStart = task.habitStartedOn != null && today < task.habitStartedOn;
+        if (task.repeat && task.checkIns[today] === undefined && !beforeStart) {
             updates.checkIns = setCheckIn(task.checkIns, today, 1);
             firestoreUpdates[`checkIns.${today}`] = 1;
         }

@@ -14,7 +14,7 @@ Nav: **Tasks · Calendar · Habits · Notes**
 
 **Calendar.** Day timeline. Drag an unscheduled task onto a block (on a phone, swipe the inbox row and drag the grip). Completed habit blocks stay on today. Optional same-time weekly fills this week’s due days at a locked clock.
 
-**Habits.** Every task with a repeat rule. Repeat is daily, every N days, or chosen weekdays. Each row has a 90-day contribution graph (3 × 30). Habits complete asks Partial or Full; Tasks/Calendar Done writes Full with no popup. Start writes Partial if today is empty. **Clear today** undoes today’s check-in. Detail has streaks, a month calendar, edit, and delete. Repeat Off turns it back into a one-off and keeps history.
+**Habits.** Every task with a repeat rule. Repeat is daily, every N days, or chosen weekdays. A habit can start today, tomorrow, or on a later date. Each row shows the last 30 days (10 × 3). Open a habit for the last 90, plus streaks, a month calendar, edit, and delete. Habits complete asks Partial or Full; Tasks/Calendar Done writes Full with no popup. Start writes Partial if today is empty. **Clear today** undoes today’s check-in. Repeat Off turns it back into a one-off and keeps history.
 
 **Notes (Brain Dump).** Autosaving notes and a collapsible goals tile (weekly / monthly / quarterly / custom). Goals are outcomes, not habits.
 

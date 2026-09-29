@@ -2,15 +2,15 @@
 
 import { db, doc, updateDoc, deleteField, Task, RepeatRule, CheckInLevel } from '@/lib/firebase/firestore';
 import { useTasksStore, useCalendarStore } from '@/lib/store/optimistic';
-import { formatDateKey, addDays } from '@/lib/utils/dates';
-import { isDueOn, nextDueDate, setCheckIn, rollHabit, parseDateKey, repeatRulesEqual, undoTodayCheckIn as computeUndoToday } from '@/lib/habits/logic';
+import { formatDateKey } from '@/lib/utils/dates';
+import { firstOpenDue, setCheckIn, rollHabit, repeatRulesEqual, undoTodayCheckIn as computeUndoToday } from '@/lib/habits/logic';
 import { nextHabitColor } from '@/lib/habits/palette';
 import { syncWeeklySeries, tearDownWeeklySeries } from '@/lib/actions/habitSeries';
 
 export async function setTaskRepeat(
     taskId: string,
     repeat: RepeatRule | null,
-    extras?: { sameTimeWeekly?: boolean; color?: string | null },
+    extras?: { sameTimeWeekly?: boolean; color?: string | null; startedOn?: string },
 ): Promise<void> {
     const task = useTasksStore.getState().tasks.find((t) => t.id === taskId);
     if (!task) return;
@@ -37,18 +37,18 @@ export async function setTaskRepeat(
         return;
     }
 
-    const habitStartedOn = task.habitStartedOn ?? today;
+    let habitStartedOn = extras?.startedOn ?? task.habitStartedOn ?? today;
+    if (habitStartedOn < today && habitStartedOn !== task.habitStartedOn) habitStartedOn = today;
     const otherHexes = useTasksStore
         .getState()
         .tasks.filter((t) => t.id !== taskId && t.repeat !== null && t.color)
         .map((t) => t.color as string);
     const color = extras?.color ?? task.color ?? nextHabitColor(otherHexes);
-    const ruleUnchanged = Boolean(task.repeat && task.dueDate && repeatRulesEqual(task.repeat, repeat));
-    const dueDate = ruleUnchanged
-        ? task.dueDate
-        : isDueOn(repeat, today, habitStartedOn)
-            ? today
-            : nextDueDate(repeat, formatDateKey(addDays(parseDateKey(today), -1)), habitStartedOn);
+    const startChanged = habitStartedOn !== (task.habitStartedOn ?? today);
+    const ruleUnchanged = Boolean(
+        task.repeat && task.dueDate && repeatRulesEqual(task.repeat, repeat) && !startChanged,
+    );
+    const dueDate = ruleUnchanged ? task.dueDate : firstOpenDue(repeat, today, habitStartedOn);
 
     const updates: Partial<Task> = { repeat, habitStartedOn, color, dueDate };
     if (extras?.sameTimeWeekly === true) {
@@ -68,6 +68,7 @@ export async function completeHabit(taskId: string, level: CheckInLevel): Promis
     if (!task) return;
 
     const today = formatDateKey(new Date());
+    if (task.habitStartedOn && today < task.habitStartedOn) return;
     const roll = rollHabit({ task, todayKey: today, level, nowMs: Date.now() });
 
     const optimisticUpdates: Partial<Task> = {

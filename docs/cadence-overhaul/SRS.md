@@ -272,7 +272,7 @@ export async function setTaskRepeat(
 ```
 
 - `repeat === null`: one-off. Clear `habitStartedOn`, `sameTimeWeekly`, `lockedTime`, `dueDate`. **Keep** `checkIns`, `checkInElapsed`, `color`. Delete bound weekly events except today’s primary (see 4.3).
-- `repeat !== null`: if `habitStartedOn` is null, set it to today. If `color` is null, `nextHabitColor` from other habits. Set `dueDate` to today if `isDueOn` else `nextDueDate(repeat, yesterday, habitStartedOn)` — practically: first due day `>= today`. Apply `extras`.
+- `repeat !== null`: `habitStartedOn` is `extras.startedOn` when set, else the existing start, else today. A new start before today is clamped to today; an existing past start is kept. If `color` is null, `nextHabitColor` from other habits. Recompute `dueDate` with `firstOpenDue` unless the rule and start are unchanged. Apply `extras`.
 
 ```ts
 export async function completeHabit(taskId: string, level: CheckInLevel): Promise<void>
@@ -408,14 +408,14 @@ Empty list → recap hidden.
 |---|---|
 | FR-H1 | Fourth nav item Habits between Calendar and Notes. Routes `/habits` and `/habits/[id]`. |
 | FR-H2 | Habits list shows every task with `repeat !== null`. |
-| FR-H3 | Each row: title, habit color, rolling graph of **at least 30 days** ending today (if `habitStartedOn` is newer, pad empty days so the strip is still ~30). |
+| FR-H3 | Each row: title, habit color, rolling graph of the **last 30 days** in a 10×3 grid. |
 | FR-H4 | Graph cell color: empty = token muted square; `1` = habit color at ~40% opacity; `2` = habit color at 100%. |
 | FR-H5 | Due / overdue unfinished habits sort above the rest. |
 | FR-H6 | Tap row (not the complete control) → `/habits/[id]`. |
 | FR-H7 | Complete control opens a compact chooser: Partial (`1`) / Full (`2`), then `completeHabit`. Allowed even if never started. |
 | FR-H8 | Complete-control discriminator is **already rolled**, not “has a check-in.” If `dueDate > today` (rolled; today already logged), the chooser calls `setCheckInLevel` and does not roll again. If `dueDate <= today` (due or overdue, including a started habit whose `checkIns[today] === 1`), the chooser calls `completeHabit`. Start writing `1` must not block roll. |
-| FR-H9 | Detail page: full-history graph from `habitStartedOn` through today, paging month calendar (cells use same 0/1/2 colors), current streak, best streak, edit. |
-| FR-H10 | Create via Habits FAB. Edit via detail. Fields: title, repeat (daily / every N / weekdays), color (palette), same-time weekly. |
+| FR-H9 | Detail page: last **90 days** (30×3), paging month calendar (cells use same 0/1/2 colors), current streak, best streak, edit. |
+| FR-H10 | Create via Habits FAB. Edit via detail. Fields: title, repeat (daily / every N / weekdays), start (today / tomorrow / a later date), color (palette), same-time weekly. |
 | FR-H11 | Task form Repeat section is the same convert/create path (`setTaskRepeat`). |
 | FR-H12 | Intensity chooser offers **Clear today** when today has a check-in. Calls `undoTodayCheckIn`. Partial↔Full still uses FR-H8. |
 | FR-H13 | Delete habit uses the shared confirm + `deleteTask` (habit + every calendar event). Buttons on habit detail and the edit form. Repeat Off still converts to a one-off and keeps history. |

@@ -49,9 +49,9 @@ One authenticated user (the owner). PWA, mobile-first, AMOLED dark is the defaul
 | Identity | Habit **is** a repeating task (`repeat !== null`) |
 | Today recap | Section at the **bottom of `/tasks`**, today-only, computed live |
 | Tasks filters | All hides habits not yet due again; those sit in Upcoming until the next due day |
-| Habits list | Own nav page `/habits`, all habits, like the left reference phone |
+| Habits list | Own nav page `/habits`. Each tile’s graph is the last 30 days (10×3). Detail shows the last 90. |
 | Habit detail | `/habits/[id]`, history from the day repeat was turned on |
-| Repeat rules | Daily · every N days · specific weekdays |
+| Repeat rules | Daily · every N days · specific weekdays. Start today, tomorrow, or a later date (`habitStartedOn`). Days before that are not due. |
 | Complete → roll | Immediate. Status returns to not-started. Next due is the next matching day on the **repeat grid** (anchored at `habitStartedOn`). A late completion does **not** re-anchor `everyN`. Missed due days stay empty. |
 | Calendar after complete | Today’s event **stays** as completed. Next occurrence unscheduled unless same-time weekly is on. |
 | Same-time weekly | Optional toggle. Fills due days in the current Mon–Sun week at the locked clock time. Each new week refills while the toggle stays on. Moving **time** on one bound event moves all bound events this week. Changing **date** does not move the series. Uncheck deletes this week’s other bound events; today stays. |

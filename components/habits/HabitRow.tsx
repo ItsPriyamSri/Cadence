@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Check, Repeat } from 'lucide-react';
 import { Task, RepeatRule } from '@/lib/firebase/firestore';
-import { ContributionGraph, rollingDays, GRAPH_DAYS } from './ContributionGraph';
+import { ContributionGraph, rollingDays, LIST_COLS, LIST_DAYS } from './ContributionGraph';
 import { IntensityChooser } from './IntensityChooser';
-import { formatDateKey } from '@/lib/utils/dates';
+import { parseDateKey } from '@/lib/habits/logic';
+import { addDays, formatDateKey, formatShortDate } from '@/lib/utils/dates';
 import { cn } from '@/lib/utils/cn';
 
 interface HabitRowProps {
@@ -33,6 +34,12 @@ function getDueHint(habit: Task, todayKey: string): string {
     if (checkIn === 2) return 'Completed today';
     if (checkIn === 1) return 'Partially completed';
 
+    if (habit.habitStartedOn && habit.habitStartedOn > todayKey) {
+        const tomorrow = formatDateKey(addDays(parseDateKey(todayKey), 1));
+        if (habit.habitStartedOn === tomorrow) return 'Starts tomorrow';
+        return `Starts ${formatShortDate(parseDateKey(habit.habitStartedOn))}`;
+    }
+
     if (habit.dueDate) {
         if (habit.dueDate < todayKey) return 'Overdue';
         if (habit.dueDate === todayKey) return 'Today';
@@ -54,7 +61,8 @@ export function HabitRow({ habit, todayKey: propTodayKey }: HabitRowProps) {
     const isDueOrOverdueUnfinished =
         habit.dueDate !== null && habit.dueDate <= todayKey && !checkInLevel;
 
-    const days = rollingDays(todayKey, GRAPH_DAYS);
+    const notStarted = Boolean(habit.habitStartedOn && habit.habitStartedOn > todayKey);
+    const days = rollingDays(todayKey, LIST_DAYS);
     const dueHint = getDueHint(habit, todayKey);
 
     const handleRowClick = () => {
@@ -63,6 +71,7 @@ export function HabitRow({ habit, todayKey: propTodayKey }: HabitRowProps) {
 
     const handleCompleteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (notStarted) return;
         setChooserOpen(true);
     };
 
@@ -117,8 +126,12 @@ export function HabitRow({ habit, todayKey: propTodayKey }: HabitRowProps) {
                     <button
                         type="button"
                         onClick={handleCompleteClick}
-                        aria-label={`Log check-in for ${habit.title}`}
-                        className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-transform active:scale-90"
+                        disabled={notStarted}
+                        aria-label={notStarted ? `${habit.title} has not started` : `Log check-in for ${habit.title}`}
+                        className={cn(
+                            'shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-transform active:scale-90',
+                            notStarted && 'opacity-40'
+                        )}
                         style={{
                             border: `2px solid ${habitColor}`,
                             backgroundColor:
@@ -147,6 +160,7 @@ export function HabitRow({ habit, todayKey: propTodayKey }: HabitRowProps) {
                         color={habitColor}
                         checkIns={habit.checkIns}
                         days={days}
+                        columns={LIST_COLS}
                     />
                 </div>
             </motion.div>

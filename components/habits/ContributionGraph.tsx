@@ -17,6 +17,10 @@ export const GRAPH_COLS = 30;
 export const GRAPH_ROWS = 3;
 export const GRAPH_DAYS = GRAPH_COLS * GRAPH_ROWS;
 
+export const LIST_COLS = 10;
+export const LIST_ROWS = 3;
+export const LIST_DAYS = LIST_COLS * LIST_ROWS;
+
 export function rollingDays(todayKey: string, count = GRAPH_DAYS): string[] {
     const today = parseDateKey(todayKey);
     const days: string[] = [];

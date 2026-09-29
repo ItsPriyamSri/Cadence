@@ -52,6 +52,13 @@ export function nextDueDate(rule: RepeatRule, fromDateKey: string, habitStartedO
     throw new Error('nextDueDate: none found');
 }
 
+/** First due day on or after max(today, habitStartedOn). */
+export function firstOpenDue(rule: RepeatRule, todayKey: string, habitStartedOn: string): string {
+    const anchor = todayKey < habitStartedOn ? habitStartedOn : todayKey;
+    if (isDueOn(rule, anchor, habitStartedOn)) return anchor;
+    return nextDueDate(rule, anchor, habitStartedOn);
+}
+
 export function dueDaysInWeek(rule: RepeatRule, weekStartKeyStr: string, habitStartedOn: string): string[] {
     const start = parseDateKey(weekStartKeyStr);
     const days: string[] = [];
