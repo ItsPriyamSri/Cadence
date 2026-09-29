@@ -1,7 +1,7 @@
 // Pure, Firebase-free habit logic. Import type only from firestore so this
 // module (and its self-check) never boots the Firebase SDK.
 import type { RepeatRule, CheckInLevel, Task } from '@/lib/firebase/firestore';
-import { formatDateKey, addDays, getWeekRange } from '@/lib/utils/dates';
+import { formatDateKey, addDays, subDays, getWeekRange } from '@/lib/utils/dates';
 
 /** Parse a local `yyyy-MM-dd` key as a local calendar date (never UTC). */
 export function repeatRulesEqual(a: RepeatRule | null, b: RepeatRule | null): boolean {
@@ -261,7 +261,26 @@ export interface RecapItem {
     inProgress: boolean;
 }
 
-function completedAtDateKey(completedAt: Task['completedAt']): string | null {
+export const DONE_TASK_KEEP_DAYS = 90;
+
+/** One-off done tasks older than `keepDays` calendar days. Habits are never stale. */
+export function isStaleDoneTask(
+    task: {
+        status: Task['status'];
+        repeat: Task['repeat'];
+        completedAt: { toDate?: () => Date } | null;
+    },
+    todayKey: string,
+    keepDays = DONE_TASK_KEEP_DAYS,
+): boolean {
+    if (task.repeat !== null || task.status !== 'done') return false;
+    const key = completedAtDateKey(task.completedAt);
+    if (!key) return false;
+    const cutoff = formatDateKey(subDays(parseDateKey(todayKey), keepDays));
+    return key < cutoff;
+}
+
+function completedAtDateKey(completedAt: { toDate?: () => Date } | null): string | null {
     if (completedAt && typeof completedAt.toDate === 'function') {
         return formatDateKey(completedAt.toDate());
     }

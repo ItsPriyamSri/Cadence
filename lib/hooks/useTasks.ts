@@ -11,6 +11,7 @@ import {
 import { db, docToTask } from '@/lib/firebase/firestore';
 import { useUser } from '@/lib/firebase/auth';
 import { useTasksStore } from '@/lib/store/optimistic';
+import { pruneStaleDoneTasks } from '@/lib/actions/tasks';
 
 // Hook that syncs Firestore with the optimistic store
 export function useTasks() {
@@ -36,6 +37,9 @@ export function useTasks() {
             (snapshot) => {
                 const tasksData = snapshot.docs.map(docToTask);
                 setTasks(tasksData);
+                pruneStaleDoneTasks(tasksData).catch((error) => {
+                    console.error('Failed to prune done tasks:', error);
+                });
             },
             (error) => {
                 console.error('Error fetching tasks:', error);

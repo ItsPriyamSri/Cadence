@@ -10,7 +10,7 @@ PWA, mobile-first. Themes cycle light → dark → AMOLED.
 
 Nav: **Tasks · Calendar · Habits · Notes**
 
-**Tasks.** Status is default → started → paused ↔ started. One-offs can be done. Habits roll instead: they never sit as done. Filters are Today, Upcoming, Inbox, All, and Done. Priority stars pin a task. The bottom of the page is a today recap (elapsed, habits + one-offs).
+**Tasks.** Status is default → started → paused ↔ started. One-offs can be done, and a done task is deleted 90 days after it was completed. Habits roll instead: they never sit as done. Filters are Today, Upcoming, Inbox, All, and Done. Priority stars pin a task. The bottom of the page is a today recap (elapsed, habits + one-offs).
 
 **Calendar.** Day timeline. Drag an unscheduled task onto a block (on a phone, swipe the inbox row and drag the grip). Completed habit blocks stay on today. Optional same-time weekly fills this week’s due days at a locked clock.
 

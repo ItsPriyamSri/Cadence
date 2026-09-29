@@ -14,7 +14,10 @@ import {
     repeatRulesEqual,
     clearCheckIn,
     undoTodayCheckIn,
+    isStaleDoneTask,
+    parseDateKey,
 } from './logic';
+import { formatDateKey, subDays } from '@/lib/utils/dates';
 
 assert.equal(repeatRulesEqual({ kind: 'daily' }, { kind: 'daily' }), true);
 assert.equal(repeatRulesEqual({ kind: 'everyN', n: 2 }, { kind: 'everyN', n: 3 }), false);
@@ -102,5 +105,20 @@ assert.equal(alreadyRolledMidweek?.unroll, false);
 assert.equal(alreadyRolledMidweek?.dueDate, '2026-09-23');
 assert.equal(alreadyRolledMidweek?.checkIns['2026-09-22'], undefined);
 assert.equal(alreadyRolledMidweek?.checkIns['2026-09-21'], 2);
+
+const today = '2026-09-29';
+const keptDay = formatDateKey(subDays(parseDateKey(today), 90));
+const droppedDay = formatDateKey(subDays(parseDateKey(today), 91));
+const doneOn = (key: string | null) => ({
+    status: 'done' as const,
+    repeat: null,
+    completedAt: key ? { toDate: () => parseDateKey(key) } : null,
+});
+assert.equal(isStaleDoneTask(doneOn(droppedDay), today), true);
+assert.equal(isStaleDoneTask(doneOn(keptDay), today), false);
+assert.equal(isStaleDoneTask(doneOn(today), today), false);
+assert.equal(isStaleDoneTask({ ...doneOn(droppedDay), repeat: daily }, today), false);
+assert.equal(isStaleDoneTask({ status: 'default', repeat: null, completedAt: null }, today), false);
+assert.equal(isStaleDoneTask(doneOn(null), today), false);
 
 console.log('logic.selfcheck OK');

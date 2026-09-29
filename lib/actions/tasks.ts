@@ -13,7 +13,7 @@ import { db, Task } from '@/lib/firebase/firestore';
 import { getCurrentUserId } from '@/lib/firebase/auth';
 import { useTasksStore, useCalendarStore } from '@/lib/store/optimistic';
 import { formatDateKey } from '@/lib/utils/dates';
-import { accumulateElapsed, displayedElapsedMs, setCheckIn } from '@/lib/habits/logic';
+import { accumulateElapsed, displayedElapsedMs, isStaleDoneTask, setCheckIn } from '@/lib/habits/logic';
 import { completeHabit } from '@/lib/actions/habits';
 
 export type TaskStatus = 'default' | 'started' | 'paused' | 'done';
@@ -122,7 +122,27 @@ export async function updateTask(taskId: string, updates: Partial<Task>) {
     }
 }
 
-export async function deleteTask(taskId: string) {
+const pruningIds = new Set<string>();
+
+export async function pruneStaleDoneTasks(tasks: Task[]): Promise<void> {
+    const today = formatDateKey(new Date());
+    const stale = tasks.filter(
+        (task) => isStaleDoneTask(task, today) && !task.id.startsWith('temp_') && !pruningIds.has(task.id),
+    );
+    await Promise.all(
+        stale.map(async (task) => {
+            pruningIds.add(task.id);
+            try {
+                await deleteTask(task.id, { quiet: true });
+            } catch (error) {
+                pruningIds.delete(task.id);
+                console.error('Failed to prune done task:', error);
+            }
+        }),
+    );
+}
+
+export async function deleteTask(taskId: string, options?: { quiet?: boolean }) {
     const task = useTasksStore.getState().tasks.find(t => t.id === taskId);
     const linkedEvents = useCalendarStore.getState().events.filter((e) => e.taskId === taskId);
     const eventIdsToDelete = new Set(linkedEvents.map((e) => e.id));
@@ -133,7 +153,7 @@ export async function deleteTask(taskId: string) {
     useTasksStore.getState().removeTask(taskId);
     eventIdsToDelete.forEach((id) => useCalendarStore.getState().removeEvent(id));
 
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    if (!options?.quiet && typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate(40);
     }
 

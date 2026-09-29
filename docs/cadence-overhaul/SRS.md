@@ -450,7 +450,7 @@ Empty list → recap hidden.
 |---|---|
 | FR-D1 | No `reports` collection. Recap is derived. |
 | FR-D2 | Do not auto-delete keys from `checkIns` / `checkInElapsed`. User undo of today may `deleteField` those two keys for today only. |
-| FR-D3 | Do not add automatic prune of one-off tasks in this overhaul. |
+| FR-D3 | A one-off with `status === 'done'` is deleted, with its calendar events, once `completedAt` is older than 90 calendar days. The completion day 90 days ago is kept. Habits and tasks with no `completedAt` are not pruned. |
 
 ---
 

@@ -60,7 +60,7 @@ One authenticated user (the owner). PWA, mobile-first, AMOLED dark is the defaul
 | Create / convert | Habits FAB **and** Repeat section on the task form. Same fields. |
 | Timer | One live clock. Starting task B pauses task A. `elapsedMs` is truth. Calendar banner uses the same clock. |
 | Focus UI | Tasks pill shows title + elapsed; tap expands to full-page ring; slide down / back collapses to the pill. |
-| Storage | `checkIns` kept from `habitStartedOn`. No `reports` collection. Do not auto-prune habit history. User undo may drop today’s keys. |
+| Storage | `checkIns` kept from `habitStartedOn`. No `reports` collection. Do not auto-prune habit history. User undo may drop today’s keys. Done one-offs are deleted 90 days after `completedAt`. |
 | Delete | Confirm, then hard-delete the habit and all its calendar events (`deleteTask`). Repeat Off still converts to a one-off and keeps history. |
 | Inbox tray | All unscheduled tasks, hidden horizontal scroll, drag starts after a short movement. |
 
